@@ -1,24 +1,28 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/netip"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
 var factionRegexp = regexp.MustCompile("^[0-9a-zA-Z]{8}$")
 
 type app struct {
+	land sync.Map
 }
 
 func (s *app) initOrPanic() {
+	s.land = sync.Map{}
 }
 
-func (s *app) listSavForRom(w http.ResponseWriter, r *http.Request) {
+func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	if !strings.HasPrefix(r.URL.Path, "/claim/") {
 		w.WriteHeader(500)
@@ -41,6 +45,9 @@ func (s *app) listSavForRom(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte("Internal error: address was not IPv4"))
 			} else {
 				ip := addr.Addr()
+				ip_bytes := ip.As4()
+				s.land.Store(ip_bytes, name)
+
 				msg := fmt.Sprintf("[%s] = \"%s\"", ip, name)
 				log.Println(msg)
 				w.WriteHeader(200)
@@ -50,12 +57,30 @@ func (s *app) listSavForRom(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *app) summaryRoute(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	res := make(map[string]int)
+	s.land.Range(func(key interface{}, value interface{}) bool {
+		name := value.(string)
+		if n, ok := res[name]; ok {
+			res[name] = n + 1
+		} else {
+			res[name] = 1
+		}
+		return true
+	})
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.Encode(res)
+}
+
 func main() {
 	a := app{}
 	a.initOrPanic()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/claim/", a.listSavForRom)
+	mux.HandleFunc("/claim/", a.claimRoute)
+	mux.HandleFunc("/summary", a.summaryRoute)
 
 	serve := &http.Server{
 		Addr:           ":8081",
