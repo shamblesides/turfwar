@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -8,18 +10,27 @@ import (
 	"net/netip"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
+
+	_ "embed"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var factionRegexp = regexp.MustCompile("^[0-9a-zA-Z]{8}$")
 
 type app struct {
-	land sync.Map
+	db *sql.DB
 }
 
+//go:embed migration.sql
+var migrations string
+
 func (s *app) initOrPanic() {
-	s.land = sync.Map{}
+	_, err := s.db.Exec(migrations)
+	if err != nil {
+		log.Fatalln("migrations: ", err)
+	}
 }
 
 func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
@@ -46,12 +57,17 @@ func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 			} else {
 				ip := addr.Addr()
 				ip_bytes := ip.As4()
-				s.land.Store(ip_bytes, name)
-
-				msg := fmt.Sprintf("[%s] = \"%s\"", ip, name)
-				log.Println(msg)
-				w.WriteHeader(200)
-				w.Write(([]byte(msg)))
+				ip_uint := binary.BigEndian.Uint32(ip_bytes[:])
+				_, err := s.db.Exec("INSERT INTO land (ip, nick) VALUES (?1, ?2) ON CONFLICT (ip) DO UPDATE SET (nick) = (?2)", ip_uint, name)
+				if err != nil {
+					w.WriteHeader(500)
+					w.Write([]byte("Internal error: error while inserting into DB"))
+				} else {
+					msg := fmt.Sprintf("[%s] = \"%s\"", ip, name)
+					log.Println(msg)
+					w.WriteHeader(200)
+					w.Write(([]byte(msg)))
+				}
 			}
 		}
 	}
@@ -59,23 +75,35 @@ func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 
 func (s *app) summaryRoute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
-	res := make(map[string]int)
-	s.land.Range(func(key interface{}, value interface{}) bool {
-		name := value.(string)
-		if n, ok := res[name]; ok {
-			res[name] = n + 1
-		} else {
-			res[name] = 1
+	res := make(map[string]uint)
+	rows, err := s.db.Query("SELECT nick, COUNT(ip) FROM land GROUP BY ip;")
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("Internal error: could not query DB for summary."))
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var nick string
+		var count uint
+		if err := rows.Scan(&nick, &count); err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("Internal error: error scanning rows for summary"))
+			return
 		}
-		return true
-	})
+		res[nick] = count
+	}
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	enc.Encode(res)
 }
 
 func main() {
-	a := app{}
+	db, err := sql.Open("sqlite3", "./db.sqlite3")
+	if err != nil {
+		log.Fatalln("open: ", err)
+	}
+	a := app{db}
 	a.initOrPanic()
 
 	mux := http.NewServeMux()
