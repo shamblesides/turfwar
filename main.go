@@ -2,17 +2,17 @@ package main
 
 import (
 	"database/sql"
+	"embed"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
 	"math"
 	"net/http"
 	"net/netip"
 	"regexp"
 	"time"
-
-	_ "embed"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -141,8 +141,15 @@ func (s *app) summaryRoute(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(res)
 }
 
+//go:embed static/*
+var staticContent embed.FS
+
 func main() {
 	db, err := sql.Open("sqlite3", "./db.sqlite3")
+	if err != nil {
+		log.Fatalln("open: ", err)
+	}
+	staticDir, err := fs.Sub(staticContent, "static")
 	if err != nil {
 		log.Fatalln("open: ", err)
 	}
@@ -153,7 +160,8 @@ func main() {
 	mux.HandleFunc("/claim/", a.claimRoute)
 	mux.HandleFunc("/summary", a.summaryRoute)
 	mux.HandleFunc("/ip", a.myIpRoute)
-	mux.Handle("/", http.FileServer(http.Dir("./static")))
+	// mux.Handle("/", http.FileServer(http.Dir("./static")))
+	mux.Handle("/", http.FileServer(http.FS(staticDir)))
 
 	serve := &http.Server{
 		Addr:           ":8081",
