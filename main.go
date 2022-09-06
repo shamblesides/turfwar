@@ -62,9 +62,16 @@ func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(500)
 				w.Write([]byte("Internal error: error while inserting into DB"))
 			} else {
-				msg := fmt.Sprintf("[%s] = \"%s\"", ip, name)
-				log.Println(msg)
+				log.Printf("[%s] = \"%s\"\n", ip, name)
+				w.Header().Add("Content-Type", "text/html")
 				w.WriteHeader(200)
+				page := fmt.Sprintf(`
+					<!doctype html>
+					<meta name="viewport" content="width=device-width, initial-scale=1">
+					The land at %s was claimed for %s.
+					<p>
+					<a href=/>Back to homepage</a>`, ip, name)
+				w.Write([]byte(page))
 			}
 		}
 	}

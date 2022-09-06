@@ -12,15 +12,27 @@
         height: 12vmin;
         display: inline-block;
     }
+    .segment-loading {
+        font-style: italic;
+        opacity: 0.7;
+    }
 </style>
 
-<h1>Global Leaders</h1>
-<ul id="global-leaders"></ul>
+<h1>Claim This Land For...</h1>
+<p>Alphanumeric characters only, please</p>
+<form action="/claim" method="GET">
+    <input type="text" minlength="8" maxlength="8" pattern="[a-zA-Z0-9]+" name="name" placeholder="namehere">
+    <button type="submit">Claim!</button>
+</form>
 
 <h1>Segments</h1>
 <div id="segments"></div>
 <template id="segment">
-    <div class="segment"></div>
+    <div class="segment segment-loading">
+        <span class="segment-cidr"></span>
+        <br>
+        <span class="segment-nick">&nbsp;</span>
+    </div>
 </template>
 
 <script>
@@ -29,9 +41,18 @@
     const segmentsSection = document.querySelector('#segments')
 
     for (let i = 0; i <= 255; ++i) {
+        /** @type{HTMLElement} */
         const el = segmentTemplate.content.cloneNode(true).querySelector('*');
-        el.innerText = `${i}.0.0.0/8`;
+        const cidr = `${i}.0.0.0/8`;
+        fetch(`/summary?subnet=${cidr}`).then(res => res.json()).then(json => {
+            const list = Object.entries(json).sort(([k1,v1],[k2,v2]) => v1-v2);
+            if (list.length > 0) {
+                const [name, val] = list[0];
+                el.querySelector('.segment-nick').innerText = name;
+                el.classList.remove('segment-loading');
+            }
+        })
+        el.querySelector('.segment-cidr').innerText = cidr;
         segmentsSection.appendChild(el);
     }
-    segmentTemplate.content.cloneNode(true);
 </script>
