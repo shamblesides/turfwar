@@ -118,7 +118,7 @@ func (s *app) summaryRoute(w http.ResponseWriter, r *http.Request) {
 		biggest = math.MaxUint32
 	}
 	res := make(map[string]uint)
-	rows, err := s.db.Query("SELECT nick, COUNT(ip) FROM land WHERE ip >= ?1 AND ip <= ?2 GROUP BY ip;", smallest, biggest)
+	rows, err := s.db.Query("SELECT nick, COUNT(ip) FROM land WHERE ip >= ?1 AND ip <= ?2 GROUP BY nick;", smallest, biggest)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte("Internal error: could not query DB for summary."))
