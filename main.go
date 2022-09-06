@@ -35,6 +35,7 @@ func (s *app) initOrPanic() {
 
 func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Content-Type", "application/json")
 	if !strings.HasPrefix(r.URL.Path, "/claim/") {
 		w.WriteHeader(500)
 		w.Write([]byte("Internal error: Unexpected path"))
@@ -75,6 +76,7 @@ func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 
 func (s *app) summaryRoute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Content-Type", "application/json")
 	res := make(map[string]uint)
 	rows, err := s.db.Query("SELECT nick, COUNT(ip) FROM land GROUP BY ip;")
 	if err != nil {
