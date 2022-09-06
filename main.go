@@ -35,7 +35,6 @@ func (s *app) initOrPanic() {
 
 func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
-	w.Header().Add("Content-Type", "application/json")
 	if !strings.HasPrefix(r.URL.Path, "/claim/") {
 		w.WriteHeader(500)
 		w.Write([]byte("Internal error: Unexpected path"))
@@ -64,6 +63,7 @@ func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(500)
 					w.Write([]byte("Internal error: error while inserting into DB"))
 				} else {
+					w.Header().Add("Content-Type", "application/json")
 					msg := fmt.Sprintf("[%s] = \"%s\"", ip, name)
 					log.Println(msg)
 					w.WriteHeader(200)
@@ -76,7 +76,6 @@ func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 
 func (s *app) summaryRoute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
-	w.Header().Add("Content-Type", "application/json")
 	res := make(map[string]uint)
 	rows, err := s.db.Query("SELECT nick, COUNT(ip) FROM land GROUP BY ip;")
 	if err != nil {
@@ -95,6 +94,7 @@ func (s *app) summaryRoute(w http.ResponseWriter, r *http.Request) {
 		}
 		res[nick] = count
 	}
+	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	enc.Encode(res)
