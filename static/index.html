@@ -67,7 +67,7 @@
                 el.classList.remove('segment-loading');
                 el.querySelector('.segment-cidr').innerText = cidr;
 
-                const list = Object.entries(json).sort(([k1,v1],[k2,v2]) => v1-v2);
+                const list = Object.entries(json).sort(([k1,v1],[k2,v2]) => v2-v1);
                 if (list.length > 0) {
                     const [name, count] = list[0];
                     el.querySelector('.segment-nick').innerText = name;
