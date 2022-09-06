@@ -28,14 +28,16 @@
     }
 </style>
 
-<h1>Claim This Land For...</h1>
-<p>Alphanumeric characters only, please</p>
+<h1>Claim The Land At <span id="my-ip">Your IP</span></h1>
+<p>(Alphanumeric characters only, please)</p>
 <form action="/claim" method="GET">
+    <label for="name">I claim this land for</label>
     <input type="text" minlength="8" maxlength="8" pattern="[a-zA-Z0-9]+" name="name" placeholder="namehere">
     <button type="submit">Claim!</button>
 </form>
 
 <h1>Class A Subnet Leaders</h1>
+<noscript>(Requires JavaScript to view)</noscript>
 <div id="segments"></div>
 <template id="segment">
     <div class="segment segment-loading">
@@ -46,29 +48,35 @@
 </template>
 
 <script>
-    /** @type{HTMLTemplateElement} */
-    const segmentTemplate = document.querySelector('#segment');
-    const segmentsSection = document.querySelector('#segments')
+    fetch('/ip').then(res => res.status === 200 ? res.text() : null).then(myIP => {
+        if (myIP != null) {
+            document.getElementById('my-ip').innerText = myIP;
+        }
+    }).then(() => {
+        /** @type{HTMLTemplateElement} */
+        const segmentTemplate = document.querySelector('#segment');
+        const segmentsSection = document.querySelector('#segments')
 
-    for (let i = 0; i <= 255; ++i) {
-        /** @type{HTMLElement} */
-        const el = segmentTemplate.content.cloneNode(true).querySelector('*');
-        segmentsSection.appendChild(el);
+        for (let i = 0; i <= 255; ++i) {
+            /** @type{HTMLElement} */
+            const el = segmentTemplate.content.cloneNode(true).querySelector('*');
+            segmentsSection.appendChild(el);
 
-        const cidr = `${i}.0.0.0/8`;
-        fetch(`/summary?subnet=${cidr}`).then(res => res.json()).then(json => {
-            el.classList.remove('segment-loading');
-            el.querySelector('.segment-cidr').innerText = cidr;
+            const cidr = `${i}.0.0.0/8`;
+            fetch(`/summary?subnet=${cidr}`).then(res => res.json()).then(json => {
+                el.classList.remove('segment-loading');
+                el.querySelector('.segment-cidr').innerText = cidr;
 
-            const list = Object.entries(json).sort(([k1,v1],[k2,v2]) => v1-v2);
-            if (list.length > 0) {
-                const [name, count] = list[0];
-                el.querySelector('.segment-nick').innerText = name;
-                el.querySelector('.segment-count').innerText = `(${count} addresses)`;
-                el.classList.add('segment-ready');
-            } else {
-                el.classList.add('segment-empty');
-            }
-        })
-    }
+                const list = Object.entries(json).sort(([k1,v1],[k2,v2]) => v1-v2);
+                if (list.length > 0) {
+                    const [name, count] = list[0];
+                    el.querySelector('.segment-nick').innerText = name;
+                    el.querySelector('.segment-count').innerText = `(${count} addresses)`;
+                    el.classList.add('segment-ready');
+                } else {
+                    el.classList.add('segment-empty');
+                }
+            })
+        }
+    })
 </script>

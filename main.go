@@ -33,6 +33,22 @@ func (s *app) initOrPanic() {
 	}
 }
 
+func (s *app) myIpRoute(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	addr, err := netip.ParseAddrPort(r.RemoteAddr)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("Internal error: couldn't understand remote address"))
+	} else if !addr.Addr().Is4() {
+		w.WriteHeader(500)
+		w.Write([]byte("Internal error: address was not IPv4"))
+	} else {
+		ip := addr.Addr()
+		ip_str := fmt.Sprint(ip)
+		w.Write([]byte(ip_str))
+	}
+}
+
 func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	name := r.URL.Query().Get("name")
@@ -136,6 +152,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/claim/", a.claimRoute)
 	mux.HandleFunc("/summary", a.summaryRoute)
+	mux.HandleFunc("/ip", a.myIpRoute)
 	mux.Handle("/", http.FileServer(http.Dir("./static")))
 
 	serve := &http.Server{
