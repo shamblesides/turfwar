@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"net/netip"
 	"regexp"
@@ -76,8 +77,30 @@ func (s *app) claimRoute(w http.ResponseWriter, r *http.Request) {
 
 func (s *app) summaryRoute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
+	var smallest uint32
+	var biggest uint32
+	if subnet := r.URL.Query().Get("subnet"); subnet != "" {
+		prefix, err := netip.ParsePrefix(subnet)
+		if err != nil {
+			w.WriteHeader(400)
+			w.Write([]byte("Invalid CIDR"))
+			return
+		}
+		if !prefix.Addr().Is4() {
+			w.WriteHeader(400)
+			w.Write([]byte("We only do IPv4 here"))
+			return
+		}
+		prefix = prefix.Masked()
+		smallest_bytes := prefix.Addr().As4()
+		smallest = binary.BigEndian.Uint32(smallest_bytes[:])
+		biggest = smallest + (math.MaxUint32 >> prefix.Bits())
+	} else {
+		smallest = 0
+		biggest = math.MaxUint32
+	}
 	res := make(map[string]uint)
-	rows, err := s.db.Query("SELECT nick, COUNT(ip) FROM land GROUP BY ip;")
+	rows, err := s.db.Query("SELECT nick, COUNT(ip) FROM land WHERE ip >= ?1 AND ip <= ?2 GROUP BY ip;", smallest, biggest)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte("Internal error: could not query DB for summary."))
