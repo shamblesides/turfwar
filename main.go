@@ -11,6 +11,7 @@ import (
 	"math"
 	"net/http"
 	"net/netip"
+	"os"
 	"regexp"
 	"time"
 
@@ -163,8 +164,13 @@ func main() {
 	// mux.Handle("/", http.FileServer(http.Dir("./static")))
 	mux.Handle("/", http.FileServer(http.FS(staticDir)))
 
+	addr := ":80"
+	if env_bind := os.Getenv("BIND"); env_bind != "" {
+		addr = env_bind
+	}
+
 	serve := &http.Server{
-		Addr:           ":8081",
+		Addr:           addr,
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
