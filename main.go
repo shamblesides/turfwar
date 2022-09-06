@@ -111,6 +111,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/claim/", a.claimRoute)
 	mux.HandleFunc("/summary", a.summaryRoute)
+	mux.Handle("/", http.FileServer(http.Dir("./static")))
 
 	serve := &http.Server{
 		Addr:           ":8081",

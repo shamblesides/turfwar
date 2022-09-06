@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<title>IPv4 Turf War</title>
+<meta charset="utf8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    body {
+        margin:0;
+        padding: 2%;
+    }
+    .segment {
+        width: 12%;
+        height: 12vmin;
+        display: inline-block;
+    }
+</style>
+
+<h1>Global Leaders</h1>
+<ul id="global-leaders"></ul>
+
+<h1>Segments</h1>
+<div id="segments"></div>
+<template id="segment">
+    <div class="segment"></div>
+</template>
+
+<script>
+    /** @type{HTMLTemplateElement} */
+    const segmentTemplate = document.querySelector('#segment');
+    const segmentsSection = document.querySelector('#segments')
+
+    for (let i = 0; i <= 255; ++i) {
+        const el = segmentTemplate.content.cloneNode(true).querySelector('*');
+        el.innerText = `${i}.0.0.0/8`;
+        segmentsSection.appendChild(el);
+    }
+    segmentTemplate.content.cloneNode(true);
+</script>
