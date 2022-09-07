@@ -36,7 +36,12 @@
     <button type="submit">Claim!</button>
 </form>
 
-<h1>Class A Subnet Leaders</h1>
+<h1>Top Players</h1>
+<ol id="top-players">
+    <li>Loading top players...</li>
+</ol>
+
+<h1>All Class A Subnets</h1>
 <noscript>(Requires JavaScript to view)</noscript>
 <div id="segments"></div>
 <template id="segment">
@@ -57,13 +62,13 @@
         const segmentTemplate = document.querySelector('#segment');
         const segmentsSection = document.querySelector('#segments')
 
-        for (let i = 0; i <= 255; ++i) {
+        const champs = Array(255).fill().map((_,i) => {
             /** @type{HTMLElement} */
             const el = segmentTemplate.content.cloneNode(true).querySelector('*');
             segmentsSection.appendChild(el);
 
             const cidr = `${i}.0.0.0/8`;
-            fetch(`/summary?subnet=${cidr}`).then(res => res.json()).then(json => {
+            return fetch(`/summary?subnet=${cidr}`).then(res => res.json()).then(json => {
                 el.classList.remove('segment-loading');
                 el.querySelector('.segment-cidr').innerText = cidr;
 
@@ -73,10 +78,34 @@
                     el.querySelector('.segment-nick').innerText = name;
                     el.querySelector('.segment-count').innerText = `(${count} addresses)`;
                     el.classList.add('segment-ready');
+                    return name;
                 } else {
                     el.classList.add('segment-empty');
+                    return null;
                 }
             })
-        }
+        });
+
+        Promise.all(champs).then(champs => {
+            const ol = document.getElementById('top-players');
+            ol.innerHTML = '';
+
+            const ranking = {};
+            champs.forEach((name, i) => {
+                if (name != null) {
+                    ranking[name] = (ranking[name] || []).concat([i]);
+                }
+            });
+            let winners = Object.entries(ranking).sort(([k1,v1], [k2,v2]) => v2.length-v1.length);
+            while (winners.length > 10) {
+                const worst = winners.pop()[1].length;
+                winners = winners.filter(([name, blocksOwned]) => blocksOwned.length > worst);
+            }
+            for (const [name, blocksOwned] of winners) {
+                const li = document.createElement('li');
+                li.innerText =  `${name} with ${blocksOwned.length} subnets ... ${blocksOwned.join(', ')}`
+                ol.appendChild(li);
+            }
+        });
     })
 </script>
