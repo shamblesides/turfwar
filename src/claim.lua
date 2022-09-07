@@ -33,6 +33,6 @@ else
             The land at %s was claimed for %s.
             <p>
             <a href=/>Back to homepage</a>
-        ]], IntToIPString(ip), name))
+        ]], FormatIp(ip), name))
     end
 end

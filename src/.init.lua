@@ -1,13 +1,5 @@
 sqlite3 = require "lsqlite3"
 
-function IntToIPString(n)
-    return string.format("%d.%d.%d.%d",
-        (n >> 24) & 255,
-        (n >> 16) & 255,
-        (n >> 8) & 255,
-        (n >> 0) & 255)
-end
-
 function ConnectDb()
     if not db then
         db = sqlite3.open("db.sqlite3")
