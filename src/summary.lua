@@ -30,7 +30,7 @@ else
 end
 
 local sqlite3 = require "lsqlite3"
-local db = sqlite3.open("db.sqlite3", sqlite3.OPEN_READWRITE)
+local db = sqlite3.open("db.sqlite3", sqlite3.OPEN_READONLY)
 db:exec[[PRAGMA writable_schema=ON]] -- until redbean supports strict
 local stmt = db:prepare([[
     SELECT nick, COUNT(ip) as score FROM land WHERE ip >= ?1 AND ip <= ?2 GROUP BY nick;
