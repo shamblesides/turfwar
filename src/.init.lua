@@ -21,12 +21,17 @@ end
 
 function Setup()
     local sqlite3 = require "lsqlite3"
-    local db = sqlite3.open("db.sqlite3", sqlite3.OPEN_CREATE)
-    db:exec[[
+    local db = sqlite3.open("db.sqlite3", sqlite3.OPEN_READWRITE + sqlite3.OPEN_CREATE)
+    local res = db:exec[[
         CREATE TABLE "land" (
             ip INTEGER PRIMARY KEY,
             nick TEXT NOT NULL CHECK (length(nick) = 8),
             created_at TEXT DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))
         );
     ]]
+    if res == sqlite3.OK then
+        print("Done!")
+    else
+        print(db:errmsg())
+    end
 end
