@@ -1,11 +1,3 @@
-function IntToIPString(n)
-    return string.format("%d.%d.%d.%d",
-        (n >> 24) & 255,
-        (n >> 16) & 255,
-        (n >> 8) & 255,
-        (n >> 0) & 255)
-end
-
 -- Redbean's global route handler
 function OnHttpRequest()
     local path = GetPath()
