@@ -3,24 +3,19 @@ SetHeader("Access-Control-Allow-Origin", "*")
 local smallest, biggest
 local cidr = GetParam("subnet")
 if cidr ~= nil and cidr ~= "" then
-    local full,a,b,c,d,mask = re.search([[^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})/([0-9]{1,2})$]], cidr)
+    local full, ip, mask = re.search([[^([0-9.]{7,15})/([0-9]{1,2})$]], cidr)
     if full == nil then
-        print(cidr)
         SetStatus(400)
         Write("Invalid CIDR")
         return
     end
-    a = tonumber(a)
-    b = tonumber(b)
-    c = tonumber(c)
-    d = tonumber(d)
+    ip = ParseIp(ip)
     mask = tonumber(mask)
-    if a > 255 or b > 255 or c > 255 or d > 255 or mask > 32 then
+    if ip < 0 or mask > 32 then
         SetStatus(400)
         Write("Invalid CIDR")
         return
     end
-    local ip = (a << 24) + (b << 16) + (c << 8) + d
     mask = 0xFFFFFFFF >> mask
     biggest = ip | mask
     smallest = biggest ~ mask
