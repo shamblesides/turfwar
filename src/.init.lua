@@ -6,6 +6,7 @@ function IntToIPString(n)
         (n >> 0) & 255)
 end
 
+-- Redbean's global route handler
 function OnHttpRequest()
     local path = GetPath()
     if path == "/ip" then
@@ -15,10 +16,14 @@ function OnHttpRequest()
     elseif path == "/claim" then
         Route(GetHost(), "/claim.lua")
     else
+        -- Default redbean route handling
         Route()
     end
 end
 
+-- Setup() isn't called by the server,
+-- you just call it yourself in the
+-- redbean REPL
 function Setup()
     local sqlite3 = require "lsqlite3"
     local db = sqlite3.open("db.sqlite3", sqlite3.OPEN_READWRITE + sqlite3.OPEN_CREATE)
