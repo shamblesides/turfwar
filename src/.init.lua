@@ -23,21 +23,3 @@ function OnHttpRequest()
         Route()
     end
 end
-
-function OnServerStart()
-    ConnectDb()
-    local res = db:exec[[
-        CREATE TABLE IF NOT EXISTS "land" (
-            ip INTEGER PRIMARY KEY,
-            nick TEXT NOT NULL CHECK (length(nick) = 8),
-            created_at TEXT DEFAULT (STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))
-        );
-    ]]
-    if res == sqlite3.OK then
-        print("Done!")
-    else
-        print(db:errmsg())
-    end
-    db:close()
-    db = nil
-end
