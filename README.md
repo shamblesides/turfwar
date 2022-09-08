@@ -14,5 +14,3 @@ It's a [redbean server](https://redbean.dev/).
 ```sh
 make dev
 ```
-
-Run `Setup()` in the REPL to prepare the database.
