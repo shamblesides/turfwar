@@ -30,7 +30,8 @@ local stmt = db:prepare([[
 ]])
 if stmt:bind_values(smallest, biggest) ~= sqlite3.OK then
     SetStatus(500)
-    Write("Internal error")
+    Write("Internal error (stmt:bind_values): ")
+    Write(db:errmsg())
     return
 end
 

@@ -20,11 +20,12 @@ else
     ]])
     if stmt:bind_values(GetRemoteAddr(), name) ~= sqlite3.OK then
         SetStatus(500)
-        Write("Internal error(stmt:bind_values)")
+        Write("Internal error (stmt:bind_values): ")
+        Write(db:errmsg())
     elseif stmt:step() ~= sqlite3.DONE then
         SetStatus(500)
-        Write("Internal error (stmt:step)")
-        return
+        Write("Internal error (stmt:step): ")
+        Write(db:errmsg())
     else
         local ip_str = FormatIp(ip)
         local time, nanos = unix.clock_gettime()
