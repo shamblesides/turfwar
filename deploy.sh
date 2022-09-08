@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-DOMAIN=${1:-108.61.215.240}
+DOMAIN=${1:-ipv4.games}
 
 echo "Building"
 make

@@ -5,7 +5,7 @@ as many IP addresses as you can.
 
 Get creative!
 
-Canonical instance is here: http://108.61.215.240
+Canonical instance is here: http://ipv4.games
 
 ### How it works
 
