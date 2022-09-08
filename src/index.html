@@ -37,13 +37,14 @@
     <input type="text" minlength="8" maxlength="8" pattern="[a-zA-Z0-9]+" name="name" placeholder="namehere" oninvalid="showInvalidMessage(this)">
     <button type="submit">Claim!</button>
 </form>
+<p><a href="/about.html" target="_blank">(What is this?)</a></p>
 
 <h1>Top Players</h1>
 <ol id="top-players">
     <li>Loading top players...</li>
 </ol>
 
-<h1>All Class A Subnets</h1>
+<h1>All /8 Address Blocks</h1>
 <noscript>(Requires JavaScript to view)</noscript>
 <div id="segments"></div>
 <template id="segment">
@@ -119,7 +120,7 @@
             }
             for (const [name, blocksOwned] of winners) {
                 const li = document.createElement('li');
-                li.innerText =  `${name} with ${blocksOwned.length} subnets ... ${blocksOwned.join(', ')}`
+                li.innerText =  `${name} with ${blocksOwned.length} blocks ... ${blocksOwned.join(', ')}`
                 ol.appendChild(li);
             }
         });
