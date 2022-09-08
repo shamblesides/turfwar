@@ -26,6 +26,12 @@ else
         Write("Internal error (stmt:step)")
         return
     else
+        local ip_str = FormatIp(ip)
+        local time, nanos = unix.clock_gettime()
+        local timestamp = string.format("%s.%.3dZ", os.date("!%Y-%m-%dT%H:%M:%S", time), math.floor(nanos / 1000000))
+        local log_line = string.format("%s\t%s\t%s\n", timestamp, ip_str, name)
+        Barf('claims.log', log_line, 0644, unix.O_APPEND + unix.O_CREAT)
+
         SetHeader("Content-Type", "text/html")
         Write(string.format([[
             <!doctype html>
@@ -34,6 +40,6 @@ else
             The land at %s was claimed for %s.
             <p>
             <a href=/>Back to homepage</a>
-        ]], FormatIp(ip), name, FormatIp(ip), name))
+        ]], ip_str, name, ip_str, name))
     end
 end
