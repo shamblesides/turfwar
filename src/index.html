@@ -81,7 +81,7 @@
         const segmentTemplate = document.querySelector('#segment');
         const segmentsSection = document.querySelector('#segments')
 
-        const champs = Array(255).fill().map((_,i) => {
+        const champs = Array(256).fill().map((_,i) => {
             /** @type{HTMLElement} */
             const el = segmentTemplate.content.cloneNode(true).querySelector('*');
             segmentsSection.appendChild(el);
