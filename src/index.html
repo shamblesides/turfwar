@@ -7,10 +7,19 @@
         margin:0;
         padding: 2%;
     }
+    #segments {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
     .segment {
         width: 12%;
-        height: 12vmin;
+        min-width: 150px;
+        min-height: 100px;
+        flex-grow: 0;
         display: inline-block;
+        padding: 4px;
+        box-sizing: border-box;
     }
     .segment-loading {
         font-style: italic;
@@ -23,25 +32,28 @@
     .segment-ready {
         background-color: greenyellow;
     }
+    .segment-tied {
+        background-color: lightgrey;
+    }
     .segment > * {
         display: block;
     }
 </style>
 
 <h1>Claim The Land At <span id="my-ip">Your IP</span></h1>
-<p>(Alphanumeric characters only, please)</p>
 <form action="/claim" method="GET">
     <label for="name">I claim this land for</label>
-    <input type="text" minlength="8" maxlength="8" pattern="[a-zA-Z0-9]+" name="name" placeholder="namehere">
+    <input type="text" minlength="8" maxlength="8" pattern="[a-zA-Z0-9]+" name="name" placeholder="namehere" oninvalid="showInvalidMessage(this)">
     <button type="submit">Claim!</button>
 </form>
+<p><a href="/about.html" target="_blank">(What is this?)</a></p>
 
 <h1>Top Players</h1>
 <ol id="top-players">
     <li>Loading top players...</li>
 </ol>
 
-<h1>All Class A Subnets</h1>
+<h1>All /8 Address Blocks</h1>
 <noscript>(Requires JavaScript to view)</noscript>
 <div id="segments"></div>
 <template id="segment">
@@ -53,6 +65,14 @@
 </template>
 
 <script>
+    function showInvalidMessage(el) {
+        if (el.validity.tooShort || el.validity.tooLong) {
+            el.setCustomValidity('Name should be EXACTLY 8 characters.')
+        } else if (el.validity.patternMismatch) {
+            el.setCustomValidity('Name should be ASCII alphanumeric.')
+        }
+    }
+
     fetch('/ip').then(res => res.status === 200 ? res.text() : null).then(myIP => {
         if (myIP != null) {
             document.getElementById('my-ip').innerText = myIP;
@@ -62,7 +82,7 @@
         const segmentTemplate = document.querySelector('#segment');
         const segmentsSection = document.querySelector('#segments')
 
-        const champs = Array(255).fill().map((_,i) => {
+        const champs = Array(256).fill().map((_,i) => {
             /** @type{HTMLElement} */
             const el = segmentTemplate.content.cloneNode(true).querySelector('*');
             segmentsSection.appendChild(el);
@@ -75,10 +95,16 @@
                 const list = Object.entries(json).sort(([k1,v1],[k2,v2]) => v2-v1);
                 if (list.length > 0) {
                     const [name, count] = list[0];
-                    el.querySelector('.segment-nick').innerText = name;
                     el.querySelector('.segment-count').innerText = `(${count} address${count == 1 ? '' : 'es'})`;
-                    el.classList.add('segment-ready');
-                    return name;
+                    if (list.length > 1 && list[1][1] === count) {
+                        el.querySelector('.segment-nick').innerText = '(tied)';
+                        el.classList.add('segment-tied');
+                        return null;
+                    } else {
+                        el.querySelector('.segment-nick').innerText = name;
+                        el.classList.add('segment-ready');
+                        return name;
+                    }
                 } else {
                     el.classList.add('segment-empty');
                     return null;
@@ -103,7 +129,7 @@
             }
             for (const [name, blocksOwned] of winners) {
                 const li = document.createElement('li');
-                li.innerText =  `${name} with ${blocksOwned.length} subnets ... ${blocksOwned.join(', ')}`
+                li.innerText =  `${name} with ${blocksOwned.length} blocks ... ${blocksOwned.join(', ')}`
                 ol.appendChild(li);
             }
         });
