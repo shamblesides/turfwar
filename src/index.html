@@ -76,7 +76,7 @@
                 if (list.length > 0) {
                     const [name, count] = list[0];
                     el.querySelector('.segment-nick').innerText = name;
-                    el.querySelector('.segment-count').innerText = `(${count} addresses)`;
+                    el.querySelector('.segment-count').innerText = `(${count} address${count == 1 ? '' : 'es'})`;
                     el.classList.add('segment-ready');
                     return name;
                 } else {
