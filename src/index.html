@@ -7,10 +7,18 @@
         margin:0;
         padding: 2%;
     }
+    #segments {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
     .segment {
         width: 12%;
-        height: 12vmin;
+        min-width: 150px;
+        min-height: 100px;
+        flex-grow: 0;
         display: inline-block;
+        padding: 4px;
     }
     .segment-loading {
         font-style: italic;
