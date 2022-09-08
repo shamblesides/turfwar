@@ -30,7 +30,7 @@ else
         local time, nanos = unix.clock_gettime()
         local timestamp = string.format("%s.%.3dZ", os.date("!%Y-%m-%dT%H:%M:%S", time), math.floor(nanos / 1000000))
         local log_line = string.format("%s\t%s\t%s\n", timestamp, ip_str, name)
-        Barf('claims.log', log_line, 0644, unix.O_APPEND + unix.O_CREAT)
+        unix.write(claims_log, log_line)
 
         SetHeader("Content-Type", "text/html")
         Write(string.format([[

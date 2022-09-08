@@ -9,6 +9,14 @@ function ConnectDb()
     end
 end
 
+function OnServerStart()
+    local err
+    claims_log, err = unix.open("claims.log", unix.O_WRONLY | unix.O_APPEND | unix.O_CREAT, 0644)
+    if err ~= nil then
+        Log(kLogFatal, string.format("error opening claim log: %s", err))
+    end
+end
+
 -- Redbean's global route handler
 function OnHttpRequest()
     local path = GetPath()
