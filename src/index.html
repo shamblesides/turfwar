@@ -23,6 +23,9 @@
     .segment-ready {
         background-color: greenyellow;
     }
+    .segment-tied {
+        background-color: lightgrey;
+    }
     .segment > * {
         display: block;
     }
@@ -75,10 +78,16 @@
                 const list = Object.entries(json).sort(([k1,v1],[k2,v2]) => v2-v1);
                 if (list.length > 0) {
                     const [name, count] = list[0];
-                    el.querySelector('.segment-nick').innerText = name;
                     el.querySelector('.segment-count').innerText = `(${count} addresses)`;
-                    el.classList.add('segment-ready');
-                    return name;
+                    if (list.length > 1 && list[1][1] === count) {
+                        el.querySelector('.segment-nick').innerText = '(tied)';
+                        el.classList.add('segment-tied');
+                        return null;
+                    } else {
+                        el.querySelector('.segment-nick').innerText = name;
+                        el.classList.add('segment-ready');
+                        return name;
+                    }
                 } else {
                     el.classList.add('segment-empty');
                     return null;
