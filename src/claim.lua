@@ -29,10 +29,11 @@ else
         SetHeader("Content-Type", "text/html")
         Write(string.format([[
             <!doctype html>
+            <title>The land at %s was claimed for %s.</title>
             <meta name="viewport" content="width=device-width, initial-scale=1">
             The land at %s was claimed for %s.
             <p>
             <a href=/>Back to homepage</a>
-        ]], FormatIp(ip), name))
+        ]], FormatIp(ip), name, FormatIp(ip), name))
     end
 end
