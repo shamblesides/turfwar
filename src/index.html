@@ -32,10 +32,9 @@
 </style>
 
 <h1>Claim The Land At <span id="my-ip">Your IP</span></h1>
-<p>(Alphanumeric characters only, please)</p>
 <form action="/claim" method="GET">
     <label for="name">I claim this land for</label>
-    <input type="text" minlength="8" maxlength="8" pattern="[a-zA-Z0-9]+" name="name" placeholder="namehere">
+    <input type="text" minlength="8" maxlength="8" pattern="[a-zA-Z0-9]+" name="name" placeholder="namehere" oninvalid="showInvalidMessage(this)">
     <button type="submit">Claim!</button>
 </form>
 
@@ -56,6 +55,14 @@
 </template>
 
 <script>
+    function showInvalidMessage(el) {
+        if (el.validity.tooShort || el.validity.tooLong) {
+            el.setCustomValidity('Name should be EXACTLY 8 characters.')
+        } else if (el.validity.patternMismatch) {
+            el.setCustomValidity('Name should be ASCII alphanumeric.')
+        }
+    }
+
     fetch('/ip').then(res => res.status === 200 ? res.text() : null).then(myIP => {
         if (myIP != null) {
             document.getElementById('my-ip').innerText = myIP;
