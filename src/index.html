@@ -39,7 +39,7 @@
 <h1>Claim The Land At <span id="my-ip">Your IP</span></h1>
 <form action="/claim" method="GET">
     <label for="name">I claim this land for</label>
-    <input type="text" minlength="8" maxlength="8" pattern="[a-zA-Z0-9]+" name="name" placeholder="namehere" oninvalid="showInvalidMessage(this)">
+    <input type="text" minlength="8" maxlength="8" pattern="[a-zA-Z0-9]+" name="name" placeholder="namehere" onchange="onNameFieldChange(this)">
     <button type="submit">Claim!</button>
 </form>
 <p><a href="/about.html" target="_blank">(What is this?)</a></p>
@@ -61,11 +61,15 @@
 </template>
 
 <script>
-    function showInvalidMessage(el) {
+    function onNameFieldChange(el) {
         if (el.validity.tooShort || el.validity.tooLong) {
             el.setCustomValidity('Name should be EXACTLY 8 characters.')
+            el.reportValidity();
         } else if (el.validity.patternMismatch) {
             el.setCustomValidity('Name should be ASCII alphanumeric.')
+            el.reportValidity();
+        } else {
+            el.setCustomValidity('')
         }
     }
 
