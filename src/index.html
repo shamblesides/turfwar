@@ -26,11 +26,10 @@
         opacity: 0.7;
     }
     .segment-empty {
-        font-style: italic;
-        opacity: 0.7;
+        opacity: 0.5;
     }
     .segment-tied {
-        background-color: lightgrey;
+        background-color: #f4f4f4;
     }
     .segment > * {
         display: block;
@@ -81,13 +80,11 @@
         h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
         return 4294967296 * (2097151 & h2) + (h1>>>0);
     }
-    function blockColors(str) {
+    function blockColor(str) {
         const hash = cyrb53(str);
         const hue = (hash & 0xFFF) / 0xFFF * 360 | 0;
-        const lum = (hash & 0xFF000) / 0xFF000 * 35 + 35 | 0;
-        const backgroundColor = `hsla(${hue}, 100%, ${lum}%, 1)`;
-        const color = ((hue>35 && hue<235) || lum >= 60) ? 'black' : 'white';
-        return {backgroundColor, color};
+        const backgroundColor = `hsla(${hue}, 100%, 85%, 1)`;
+        return backgroundColor;
     }
 
     fetch('/ip').then(res => res.status === 200 ? res.text() : null).then(myIP => {
@@ -120,7 +117,7 @@
                     } else {
                         el.querySelector('.segment-nick').innerText = name;
                         el.classList.add('segment-ready');
-                        Object.assign(el.style, blockColors(name))
+                        el.style.backgroundColor = blockColor(name)
                         return name;
                     }
                 } else {
