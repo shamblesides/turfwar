@@ -5,10 +5,13 @@ local name = GetParam("name")
 
 if name == nil or name == "" then
     return ServeError(400, "Name query param was blank")
-elseif #name ~= 8 then
-    return ServeError(400, "Name must be exactly 8 characters")
-elseif re.search([[^[a-zA-Z0-9]{8}$]], name) ~= name then
-    return ServeError(400, "Name must be ASCII alphanumeric")
+elseif #name > 40 then
+    return ServeError(400, "Name must be no more than 40 characters")
+else
+    local invalid_char = re.search("[^!-~]", name)
+    if invalid_char ~= nil then
+        return ServeError(400, string.format("Invalid character in name: \"%s\"", invalid_char))
+    end
 end
 
 ConnectDb()
@@ -29,6 +32,7 @@ local log_line = string.format("%s\t%s\t%s\n", timestamp, ip_str, name)
 unix.write(claims_log, log_line)
 
 SetHeader("Content-Type", "text/html")
+local escaped_name = EscapeHtml(name)
 Write(string.format([[
     <!doctype html>
     <title>The land at %s was claimed for %s.</title>
@@ -36,4 +40,4 @@ Write(string.format([[
     The land at %s was claimed for %s.
     <p>
     <a href=/>Back to homepage</a>
-]], ip_str, name, ip_str, name))
+]], ip_str, escaped_name, ip_str, escaped_name))
