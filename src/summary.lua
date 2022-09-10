@@ -25,9 +25,10 @@ else
 end
 
 ConnectDb()
-local stmt = db:prepare([[
-    SELECT nick, COUNT(ip) as score FROM land WHERE ip >= ?1 AND ip <= ?2 GROUP BY nick;
-]])
+local stmt =
+    db:prepare(
+        "SELECT nick, COUNT(ip) as score FROM land WHERE ip >= ?1 AND ip <= ?2 GROUP BY nick;"
+    )
 if stmt:bind_values(smallest, biggest) ~= sqlite3.OK then
     SetStatus(500)
     Write("Internal error (stmt:bind_values): ")

@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <title>IPv4 Turf War</title>
-<meta charset="utf8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
     body {
-        margin:0;
-        padding: 2%;
+        margin: 0;
+        padding: 0.5em;
     }
     #segments {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
+        font-family: monospace;
+        width: 162em;
+        line-height: 1.2;
+        text-align: right;
     }
     .segment {
-        width: 12%;
-        min-width: 150px;
-        min-height: 100px;
-        flex-grow: 0;
+        width: 10em;
         display: inline-block;
         padding: 4px;
         box-sizing: border-box;
+        vertical-align: middle;
     }
     .segment-loading {
         font-style: italic;
@@ -54,9 +53,8 @@
 <div id="segments"></div>
 <template id="segment">
     <div class="segment segment-loading">
-        <span class="segment-cidr">Loading...</span>
-        <span class="segment-nick"></span>
-        <span class="segment-count"></span>
+        <span class="segment-cidr">Loading...</span
+        ><span class="segment-nick"></span><span class="segment-count"></span>
     </div>
 </template>
 
@@ -73,6 +71,31 @@
         }
     }
 
+    function hilbertRotate(point, rx, ry, n) {
+        if (ry !== 0) {
+            return;
+        }
+        if (rx === 1) {
+            point.x = n - 1 - point.x;
+            point.y = n - 1 - point.y;
+        }
+        [point.x, point.y] = [point.y, point.x];
+    }
+
+    function hilbertPointToIndex(point, order) {
+        const n = 2 ** order;
+        let rx,
+            ry,
+            index = 0;
+        for (let s = n / 2; s > 0; s = Math.floor(s / 2)) {
+            rx = (point.x & s) > 0 ? 1 : 0;
+            ry = (point.y & s) > 0 ? 1 : 0;
+            index += s * s * ((3 * rx) ^ ry);
+            hilbertRotate(point, rx, ry, n);
+        }
+        return index;
+    }
+
     function cyrb53 (str, seed = 0) {
         let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
         for (let i = 0, ch; i < str.length; i++) {
@@ -84,6 +107,7 @@
         h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
         return 4294967296 * (2097151 & h2) + (h1>>>0);
     }
+
     function blockColor(str) {
         const hash = cyrb53(str);
         const hue = (hash & 0xFFF) / 0xFFF * 360 | 0;
@@ -100,7 +124,11 @@
         const segmentTemplate = document.querySelector('#segment');
         const segmentsSection = document.querySelector('#segments')
 
-        const champs = Array(256).fill().map((_,i) => {
+        const hilbertCurve = Array(16).fill().flatMap((_,y) =>
+            Array(16).fill().map((_,x) =>
+                hilbertPointToIndex({x, y}, 8)
+        ));
+        const champs = hilbertCurve.map((i,_) => {
             /** @type{HTMLElement} */
             const el = segmentTemplate.content.cloneNode(true).querySelector('*');
             segmentsSection.appendChild(el);
@@ -113,7 +141,7 @@
                 const list = Object.entries(json).sort(([k1,v1],[k2,v2]) => v2-v1);
                 if (list.length > 0) {
                     const [name, count] = list[0];
-                    el.querySelector('.segment-count').innerText = `(${count} address${count == 1 ? '' : 'es'})`;
+                    el.querySelector('.segment-count').innerText = `(${count} IP${count == 1 ? '' : 's'})`;
                     if (list.length > 1 && list[1][1] === count) {
                         el.querySelector('.segment-nick').innerText = '(tied)';
                         el.classList.add('segment-tied');
