@@ -21,7 +21,7 @@ end
 function OnHttpRequest()
     local path = GetPath()
     if path == "/ip" then
-        Route(GetHost(), "/ip.lua")
+        Write(FormatIp(GetRemoteAddr()))
     elseif path == "/summary" then
         Route(GetHost(), "/summary.lua")
     elseif path == "/claim" then

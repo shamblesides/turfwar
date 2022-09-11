@@ -88,12 +88,15 @@
         return backgroundColor;
     }
 
+    fetch('/ip').then(res => {
+        if (res.status === 200) {
+            res.text().then(myIP => document.getElementById('my-ip').innerText = myIP);
+        }
+    });
     fetch('/board').then(res => {
         if (res.status === 200) return res.json();
         else throw new Error(`Failed to load the board: ${res.status}`);
-    }).then(({ip: myIP, leaders}) => {
-        document.getElementById('my-ip').innerText = myIP;
-
+    }).then(({leaders}) => {
         /** @type{HTMLTemplateElement} */
         const segmentTemplate = document.getElementById('segment');
         const segmentsContainer = document.getElementById('segments')
