@@ -26,6 +26,8 @@ function OnHttpRequest()
         Route(GetHost(), "/summary.lua")
     elseif path == "/claim" then
         Route(GetHost(), "/claim.lua")
+    elseif path == "/board" then
+        Route(GetHost(), "/board.lua")
     else
         -- Default redbean route handling
         Route()

@@ -21,15 +21,8 @@
         padding: 4px;
         box-sizing: border-box;
     }
-    .segment-loading {
-        font-style: italic;
-        opacity: 0.7;
-    }
     .segment-empty {
         opacity: 0.5;
-    }
-    .segment-tied {
-        background-color: #f4f4f4;
     }
     .segment > * {
         display: block;
@@ -54,10 +47,10 @@
 
 <h1>All /8 Address Blocks</h1>
 <noscript>(Requires JavaScript to view)</noscript>
-<div id="segments"></div>
+<div id="segments">Loading segments...</div>
 <template id="segment">
-    <div class="segment segment-loading">
-        <span class="segment-cidr">Loading...</span>
+    <div class="segment">
+        <span class="segment-cidr"></span>
         <span class="segment-nick"></span>
         <span class="segment-count"></span>
     </div>
@@ -95,66 +88,49 @@
         return backgroundColor;
     }
 
-    fetch('/ip').then(res => res.status === 200 ? res.text() : null).then(myIP => {
-        if (myIP != null) {
-            document.getElementById('my-ip').innerText = myIP;
-        }
-    }).then(() => {
-        /** @type{HTMLTemplateElement} */
-        const segmentTemplate = document.querySelector('#segment');
-        const segmentsSection = document.querySelector('#segments')
+    fetch('/board').then(res => {
+        if (res.status === 200) return res.json();
+        else throw new Error(`Failed to load the board: ${res.status}`);
+    }).then(({ip: myIP, leaders}) => {
+        document.getElementById('my-ip').innerText = myIP;
 
-        const champs = Array(256).fill().map((_,i) => {
+        /** @type{HTMLTemplateElement} */
+        const segmentTemplate = document.getElementById('segment');
+        const segmentsContainer = document.getElementById('segments')
+        const topPlayersList = document.getElementById('top-players');
+
+        segmentsContainer.innerHTML = '';
+        topPlayersList.innerHTML = '';
+
+        const ranking = {};
+        leaders.forEach((info, i) => {
             /** @type{HTMLElement} */
             const el = segmentTemplate.content.cloneNode(true).querySelector('*');
-            segmentsSection.appendChild(el);
+            segmentsContainer.appendChild(el);
 
             const cidr = `${i}.0.0.0/8`;
-            return fetch(`/summary?subnet=${cidr}`).then(res => res.json()).then(json => {
-                el.classList.remove('segment-loading');
-                el.querySelector('.segment-cidr').innerText = cidr;
+            el.querySelector('.segment-cidr').innerText = cidr;
 
-                const list = Object.entries(json).sort(([k1,v1],[k2,v2]) => v2-v1);
-                if (list.length > 0) {
-                    const [name, count] = list[0];
-                    el.querySelector('.segment-count').innerText = `(${count} address${count == 1 ? '' : 'es'})`;
-                    if (list.length > 1 && list[1][1] === count) {
-                        el.querySelector('.segment-nick').innerText = '(tied)';
-                        el.classList.add('segment-tied');
-                        return null;
-                    } else {
-                        el.querySelector('.segment-nick').innerText = name;
-                        el.classList.add('segment-ready');
-                        el.style.backgroundColor = blockColor(name)
-                        return name;
-                    }
-                } else {
-                    el.classList.add('segment-empty');
-                    return null;
-                }
-            })
-        });
-
-        Promise.all(champs).then(champs => {
-            const ol = document.getElementById('top-players');
-            ol.innerHTML = '';
-
-            const ranking = {};
-            champs.forEach((name, i) => {
-                if (name != null) {
-                    ranking[name] = (ranking[name] || []).concat([i]);
-                }
-            });
-            let winners = Object.entries(ranking).sort(([k1,v1], [k2,v2]) => v2.length-v1.length);
-            while (winners.length > 10) {
-                const worst = winners.pop()[1].length;
-                winners = winners.filter(([name, blocksOwned]) => blocksOwned.length > worst);
-            }
-            for (const [name, blocksOwned] of winners) {
-                const li = document.createElement('li');
-                li.innerText =  `${name} with ${blocksOwned.length} blocks ... ${blocksOwned.join(', ')}`
-                ol.appendChild(li);
+            if (info) {
+                const {name, count} = info;
+                el.querySelector('.segment-nick').innerText = name;
+                el.querySelector('.segment-count').innerText = `(${count} address${count == 1 ? '' : 'es'})`;
+                el.style.backgroundColor = blockColor(name)
+                ranking[name] = (ranking[name] || []).concat([i]);
+            } else {
+                el.classList.add('segment-empty');
             }
         });
+
+        let winners = Object.entries(ranking).sort(([k1,v1], [k2,v2]) => v2.length-v1.length);
+        while (winners.length > 10) {
+            const worst = winners.pop()[1].length;
+            winners = winners.filter(([name, blocksOwned]) => blocksOwned.length > worst);
+        }
+        for (const [name, blocksOwned] of winners) {
+            const li = document.createElement('li');
+            li.innerText =  `${name} with ${blocksOwned.length} blocks ... ${blocksOwned.join(', ')}`
+            topPlayersList.appendChild(li);
+        }
     })
 </script>
