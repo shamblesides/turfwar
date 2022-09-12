@@ -138,15 +138,13 @@
 
         const winners = Object.entries(ranking).map(([n,b]) => ({name:n, blocks:b}))
         winners.sort((w1, w2) => (w2.blocks.length - w1.blocks.length) || (tiebreaker[w2.name] - tiebreaker[w1.name]));
-        const cutoff = (winners[10] || {blocks:[]}).blocks.length;
-
-        for (const {name, blocks} of winners) {
+        winners.forEach(({name, blocks}, place) => {
             const li = document.createElement('li');
             li.appendChild(nameLink(name));
             li.append(` with ${blocks.length} block${blocks.length>1?'s':''} ... ${blocks.join(', ')}`)
-            if (blocks.length <= cutoff) li.style.display = 'none';
+            if (place >= 10) li.style.display = 'none';
             topPlayersList.appendChild(li);
-        }
+        });
 
         showAllTopPlayersButton.style.display = '';
         showAllTopPlayersButton.onclick = function () {
