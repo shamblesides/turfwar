@@ -115,6 +115,7 @@
         topPlayersList.innerHTML = '';
 
         const ranking = {};
+        const tiebreaker = {};
         leaders.forEach((info, i) => {
             /** @type{HTMLElement} */
             const el = segmentTemplate.content.cloneNode(true).querySelector('*');
@@ -129,13 +130,14 @@
                 el.querySelector('.segment-count').innerText = `(${count} address${count == 1 ? '' : 'es'})`;
                 el.style.backgroundColor = blockColor(name)
                 ranking[name] = (ranking[name] || []).concat([i]);
+                tiebreaker[name] = (tiebreaker[name] || 0) + count;
             } else {
                 el.classList.add('segment-empty');
             }
         });
 
         const winners = Object.entries(ranking).map(([n,b]) => ({name:n, blocks:b}))
-        winners.sort((w1, w2) => w2.blocks.length - w1.blocks.length);
+        winners.sort((w1, w2) => (w2.blocks.length - w1.blocks.length) || (tiebreaker[w2.name] - tiebreaker[w1.name]));
         const cutoff = (winners[10] || {blocks:[]}).blocks.length;
 
         for (const {name, blocks} of winners) {
