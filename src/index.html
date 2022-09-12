@@ -44,6 +44,7 @@
 <ol id="top-players">
     <li>Loading top players...</li>
 </ol>
+<button type="button" id="show-all-top-players" style="display:none" onclick="showAllWinners()">Show All</button>
 
 <h1>All /8 Address Blocks</h1>
 <noscript>(Requires JavaScript to view)</noscript>
@@ -108,6 +109,7 @@
         const segmentTemplate = document.getElementById('segment');
         const segmentsContainer = document.getElementById('segments')
         const topPlayersList = document.getElementById('top-players');
+        const showAllTopPlayersButton = document.getElementById('show-all-top-players');
 
         segmentsContainer.innerHTML = '';
         topPlayersList.innerHTML = '';
@@ -132,16 +134,22 @@
             }
         });
 
-        let winners = Object.entries(ranking).sort(([k1,v1], [k2,v2]) => v2.length-v1.length);
-        while (winners.length > 10) {
-            const worst = winners.pop()[1].length;
-            winners = winners.filter(([name, blocksOwned]) => blocksOwned.length > worst);
-        }
-        for (const [name, blocksOwned] of winners) {
+        const winners = Object.entries(ranking).map(([n,b]) => ({name:n, blocks:b}))
+        winners.sort((w1, w2) => w2.blocks.length - w1.blocks.length);
+        const cutoff = (winners[10] || {blocks:[]}).blocks.length;
+
+        for (const {name, blocks} of winners) {
             const li = document.createElement('li');
             li.appendChild(nameLink(name));
-            li.append(` with ${blocksOwned.length} blocks ... ${blocksOwned.join(', ')}`)
+            li.append(` with ${blocks.length} block${blocks.length>1?'s':''} ... ${blocks.join(', ')}`)
+            if (blocks.length <= cutoff) li.style.display = 'none';
             topPlayersList.appendChild(li);
+        }
+
+        showAllTopPlayersButton.style.display = '';
+        showAllTopPlayersButton.onclick = function () {
+            showAllTopPlayersButton.style.display = 'none';
+            topPlayersList.querySelectorAll('li').forEach(li => li.style.display = '');
         }
     })
 </script>
