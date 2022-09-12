@@ -4,13 +4,10 @@ set -e
 DOMAIN=${1:-ipv4.games}
 
 echo "Building"
-make
+go build .
 
 echo "Copy binary to server"
-scp ./server.com $DOMAIN:/tmp/turfwar
-
-echo "Assimilate cosmopolitan binary"
-ssh $DOMAIN /tmp/turfwar --assimilate
+rsync -arzP ./turfwar $DOMAIN:/tmp/turfwar
 
 echo "Stop systemd service"
 ssh $DOMAIN sudo systemctl stop turfwar.service

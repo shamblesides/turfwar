@@ -9,7 +9,8 @@ Canonical instance is here: http://ipv4.games
 
 ### How it works
 
-It's a [redbean server](https://redbean.dev/).
+It's a Go server that uses SQLite as a glorified key-value store.
+Serves up a fairly plain HTML frontend.
 
 ```sh
 make dev
