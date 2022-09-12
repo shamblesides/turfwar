@@ -37,7 +37,7 @@ Write(string.format([[
     <!doctype html>
     <title>The land at %s was claimed for %s.</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    The land at %s was claimed for %s.
+    The land at %s was claimed for <a href="/user.html?name=%s">%s</a>.
     <p>
     <a href=/>Back to homepage</a>
-]], ip_str, escaped_name, ip_str, escaped_name))
+]], ip_str, escaped_name, ip_str, EscapeParam(name), escaped_name))

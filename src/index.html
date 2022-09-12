@@ -37,7 +37,6 @@
     <label for="name">I claim this land for</label>
     <input type="text" required maxlength="40" pattern="[!-~]+" name="name" placeholder="Name, email, URL, whatever!" onchange="onNameFieldChange(this)">
     <button type="submit" formaction="/claim" formmethod="GET">Claim!</button>
-    <button type="submit" formaction="/user.html" formmethod="GET">Check Stats</button>
 </form>
 <p><a href="/about.html" target="_blank">(What is this?)</a></p>
 
@@ -89,6 +88,13 @@
         return backgroundColor;
     }
 
+    function nameLink(name) {
+        const a = document.createElement('a');
+        a.href = `/user.html?name=${encodeURIComponent(name)}`;
+        a.innerText = name;
+        return a;
+    }
+
     fetch('/ip').then(res => {
         if (res.status === 200) {
             res.text().then(myIP => document.getElementById('my-ip').innerText = myIP);
@@ -117,7 +123,7 @@
 
             if (info) {
                 const {name, count} = info;
-                el.querySelector('.segment-nick').innerText = name;
+                el.querySelector('.segment-nick').appendChild(nameLink(name))
                 el.querySelector('.segment-count').innerText = `(${count} address${count == 1 ? '' : 'es'})`;
                 el.style.backgroundColor = blockColor(name)
                 ranking[name] = (ranking[name] || []).concat([i]);
@@ -133,7 +139,8 @@
         }
         for (const [name, blocksOwned] of winners) {
             const li = document.createElement('li');
-            li.innerText =  `${name} with ${blocksOwned.length} blocks ... ${blocksOwned.join(', ')}`
+            li.appendChild(nameLink(name));
+            li.append(` with ${blocksOwned.length} blocks ... ${blocksOwned.join(', ')}`)
             topPlayersList.appendChild(li);
         }
     })
