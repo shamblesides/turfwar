@@ -2,7 +2,7 @@ default: server.com
 
 .PHONY: clean
 clean:
-	rm -f *.com
+	rm -f *.com db.sqlite3* *.log
 
 .PHONY: dev
 dev: server.com db.sqlite3
