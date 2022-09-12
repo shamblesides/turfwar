@@ -1,0 +1,10 @@
+[Unit]
+Description=TurfWar web server
+
+[Service]
+Restart=on-failure
+WorkingDirectory=/srv
+ExecStart=/srv/turfwar -C /etc/letsencrypt/live/ipv4.games/fullchain.pem -K /etc/letsencrypt/live/ipv4.games/privkey.pem -p 80 -p 443 -s -L /srv/access.log
+
+[Install]
+WantedBy=multi-user.target
