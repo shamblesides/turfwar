@@ -5,6 +5,7 @@ import (
 	"embed"
 	"encoding/binary"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"html"
 	"io/fs"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
+	"path"
 	"regexp"
 	"time"
 
@@ -183,6 +185,10 @@ func (s *app) summaryRoute(w http.ResponseWriter, r *http.Request) {
 var staticContent embed.FS
 
 func main() {
+	tls_dir := flag.String("tls", "", "Path to directory containing fullchain.pem and privkey.pem. Optional")
+	http_addr := flag.String("bind", ":80", "Address to bind HTTP server")
+	flag.Parse()
+
 	db, err := sql.Open("sqlite3", "./db.sqlite3")
 	if err != nil {
 		log.Fatalln("open db: ", err)
@@ -204,18 +210,29 @@ func main() {
 	mux.HandleFunc("/ip", a.myIpRoute)
 	mux.Handle("/", http.FileServer(http.FS(staticDir)))
 
-	addr := ":80"
-	if env_bind := os.Getenv("BIND"); env_bind != "" {
-		addr = env_bind
+	if *tls_dir != "" {
+		serve := &http.Server{
+			Addr:           ":443",
+			Handler:        mux,
+			ReadTimeout:    10 * time.Second,
+			WriteTimeout:   10 * time.Second,
+			MaxHeaderBytes: 32 << 10,
+		}
+		cert_path := path.Join(*tls_dir, "fullchain.pem")
+		priv_path := path.Join(*tls_dir, "privkey.pem")
+		go func() {
+			log.Println("Serving HTTPS on", serve.Addr)
+			log.Fatalln(serve.ListenAndServeTLS(cert_path, priv_path))
+		}()
 	}
 
 	serve := &http.Server{
-		Addr:           addr,
+		Addr:           *http_addr,
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 32 << 10,
 	}
-	log.Println("Serving on", serve.Addr)
+	log.Println("Serving HTTP on", serve.Addr)
 	log.Fatalln(serve.ListenAndServe())
 }
