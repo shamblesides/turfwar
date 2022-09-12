@@ -19,5 +19,8 @@ server.com: redbean-2.0.18.com $(shell find src)
 redbean-2.0.18.com:
 	curl https://redbean.dev/redbean-2.0.18.com > redbean-2.0.18.com && chmod +x redbean-2.0.18.com
 
-db.sqlite3:
-	sqlite3 db.sqlite3 < schema.sql
+sqlite3.com:
+	curl https://redbean.dev/sqlite3.com > sqlite3.com && chmod +x sqlite3.com
+
+db.sqlite3: sqlite3.com
+	./sqlite3.com db.sqlite3 < schema.sql
