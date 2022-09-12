@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<title>IPv4 Turf War</title>
+<meta charset="utf8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<h1>Stats for <span id="my-name"></span></h1>
+<noscript>This page won't work without JavaScript :)</noscript>
+<ul>
+    <li>Total addresses: <span id="total-addresses">...</span></li>
+</ul>
+
+<script>
+    const params = new URLSearchParams(location.search);
+    const name = params.get('name');
+    document.getElementById('my-name').innerText = name;
+
+    const totalAddresses = document.getElementById('total-addresses')
+    fetch(`/user?name=${encodeURIComponent(name)}`).then(res => {
+        if (res.status === 200) {
+            res.json().then(({total}) => totalAddresses.innerText = total);
+        } else {
+            totalAddresses.innerText = 'error loading document';
+        }
+    });
+</script>

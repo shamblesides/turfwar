@@ -33,10 +33,11 @@
 </style>
 
 <h1>Claim The Land At <span id="my-ip">Your IP</span></h1>
-<form action="/claim" method="GET">
+<form>
     <label for="name">I claim this land for</label>
     <input type="text" required maxlength="40" pattern="[!-~]+" name="name" placeholder="Name, email, URL, whatever!" onchange="onNameFieldChange(this)">
-    <button type="submit">Claim!</button>
+    <button type="submit" formaction="/claim" formmethod="GET">Claim!</button>
+    <button type="submit" formaction="/user.html" formmethod="GET">Check Stats</button>
 </form>
 <p><a href="/about.html" target="_blank">(What is this?)</a></p>
 
