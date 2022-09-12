@@ -214,7 +214,7 @@ func main() {
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
+		MaxHeaderBytes: 32 << 10,
 	}
 	log.Println("Serving on", serve.Addr)
 	log.Fatalln(serve.ListenAndServe())
