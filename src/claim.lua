@@ -20,10 +20,13 @@ local stmt = db:prepare([[
     ON CONFLICT (ip) DO UPDATE SET (nick) = (?2)
 ]])
 if stmt:bind_values(GetRemoteAddr(), name) ~= sqlite3.OK then
+    stmt:finalize()
     return ServeError(500, string.format("Internal error (stmt:bind_values): %s", db:errmsg()))
 elseif stmt:step() ~= sqlite3.DONE then
+    stmt:finalize()
     return ServeError(500, string.format("Internal error (stmt:step): %s", db:errmsg()))
 end
+stmt:finalize()
 
 local ip_str = FormatIp(ip)
 local time, nanos = unix.clock_gettime()
