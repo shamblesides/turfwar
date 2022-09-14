@@ -8,9 +8,12 @@ if cidr ~= nil and cidr ~= "" then
         return ServeError(400, "Invalid CIDR")
     end
     ip = ParseIp(ip)
-    mask = tonumber(mask)
-    if ip < 0 or mask > 32 then
+    if ip < 0 then
         return ServeError(400, "Invalid CIDR")
+    end
+    mask = tonumber(mask)
+    if mask > 8 then
+        return ServeError(400, "Mask >8 not supported")
     end
     mask = 0xFFFFFFFF >> mask
     biggest = ip | mask
