@@ -29,7 +29,7 @@ function OnHttpRequest()
     elseif path == "/user" then
         Route(GetHost(), "/user.lua")
     elseif path == "/summary" then
-        ServeError(410, "/summary route is gone, query /board or /user?name=myname routes instead")
+        Route(GetHost(), "/summary.lua")
     else
         -- Default redbean route handling
         Route()
