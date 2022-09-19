@@ -43,16 +43,16 @@ function ConnectDb()
 end
 
 function OnServerStart()
+    if assert(unix.fork()) == 0 then
+        local worker = require("board_worker")
+        worker()
+        unix.exit(0)
+    end
+
     local err
     claims_log, err = unix.open("claims.log", unix.O_WRONLY | unix.O_APPEND | unix.O_CREAT, 0644)
     if err ~= nil then
         Log(kLogFatal, string.format("error opening claim log: %s", err))
-    end
-    local pid = assert(unix.fork())
-    if pid == 0 then
-        local UpdateBoardWorker = require "board_worker"
-        UpdateBoardWorker()
-        unix.exit(0)
     end
 end
 

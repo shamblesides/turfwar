@@ -30,7 +30,7 @@ function UpdateBoardCrawl(db, output, stmt)
 end
 
 function UpdateBoardImpl(db)
-    local stmt, err, output, board
+    local stmt, err, output
     stmt, err = db:prepare([[
         SELECT nick As name, COUNT(ip) AS count
         FROM land
@@ -46,15 +46,14 @@ function UpdateBoardImpl(db)
     output = {["leaders"]={}, ["now"]=os.time()}
     UpdateBoardCrawl(db, output, stmt)
     stmt:finalize()
-    board = EncodeJson(output)
     stmt, err = db:prepare([[
-        INSERT INTO cache (key, val) VALUES (?1, ?2)
-        ON CONFLICT (key) DO UPDATE SET (val) = (?2)
+        INSERT INTO cache (key, val) VALUES ('/board', ?1)
+        ON CONFLICT (key) DO UPDATE SET (val) = (?1)
     ]])
     if not stmt then
         Log(kLogWarn, "BOARD prepare insert: %s / %s" % {err or "(null)", db:errmsg()})
         return
-    elseif stmt:bind_values("/board", board) ~= sqlite3.OK then
+    elseif stmt:bind_values(EncodeJson(output)) ~= sqlite3.OK then
         Log(kLogWarn, "BOARD insert bind: %s" % {db:errmsg()})
     elseif stmt:step() ~= sqlite3.DONE then
         Log(kLogWarn, "BOARD insert step: %s" % {db:errmsg()})
@@ -74,11 +73,11 @@ return function()
     assert(unix.pledge("stdio flock rpath wpath cpath", nil, unix.PLEDGE_PENALTY_RETURN_EPERM))
     assert(unix.sigaction(unix.SIGINT, function() gotterm = true; end))
     assert(unix.sigaction(unix.SIGTERM, function() gotterm = true; end))
+    local db = ConnectDb()
     while not gotterm do
-        local db = ConnectDb()
         UpdateBoardImpl(db)
-        db:close()
         unix.nanosleep(30)
     end
     Log(kLogInfo, "UpdateBoardWorker() terminating")
+    db:close()
 end
