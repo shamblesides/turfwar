@@ -34,98 +34,12 @@ if IsDaemon() then
     ProgramCertificate(Slurp('/home/jart/mykey.crt'))
 end
 
-gotterm = false
-
-function OnTerm(sig)
-    gotterm = true
-end
-
 function ConnectDb()
     local db = sqlite3.open("db.sqlite3")
     db:busy_timeout(1000)
     db:exec[[PRAGMA journal_mode=WAL]]
     db:exec[[PRAGMA synchronous=NORMAL]]
     return db
-end
-
-function UpdateBoardCrawl(db, output, stmt)
-    local smallest, res
-    for smallest = 0, 0xFF000000, 0x1000000 do
-        if stmt:bind_values(smallest, smallest + 0xFFFFFF) ~= sqlite3.OK then
-            Log(kLogWarn, "BOARD Internal error (stmt:bind_values): %s" % {db:errmsg()})
-            return
-        end
-        res = stmt:step()
-        if res == sqlite3.ROW then
-            table.insert(output["leaders"], stmt:get_named_values())
-            if stmt:step() ~= sqlite3.DONE then
-                Log(kLogWarn, "BOARD Internal error (stmt:step after row): %s" % {db:errmsg()})
-                return
-            end
-        elseif res == sqlite3.DONE then
-            table.insert(output["leaders"], false)
-        else
-            Log(kLogWarn, "BOARD Internal error (stmt:step returned %d): %s" % {res, db:errmsg()})
-            return
-        end
-        stmt:reset()
-    end
-end
-
-function UpdateBoardImpl(db)
-    local stmt, err, output, board
-    stmt, err = db:prepare([[
-        SELECT nick As name, COUNT(ip) AS count
-        FROM land
-        WHERE ip >= ?1 AND ip <= ?2
-        GROUP BY nick
-        ORDER BY count DESC
-        LIMIT 1
-    ]])
-    if not stmt then
-        Log(kLogWarn, "BOARD prepare board query: %s / %s" % {err or "(null)", db:errmsg()})
-        return
-    end
-    output = {["leaders"]={}, ["now"]=os.time()}
-    UpdateBoardCrawl(db, output, stmt)
-    stmt:finalize()
-    board = EncodeJson(output)
-    stmt, err = db:prepare([[
-        INSERT INTO cache (key, val) VALUES (?1, ?2)
-        ON CONFLICT (key) DO UPDATE SET (val) = (?2)
-    ]])
-    if not stmt then
-        Log(kLogWarn, "BOARD prepare insert: %s / %s" % {err or "(null)", db:errmsg()})
-        return
-    elseif stmt:bind_values("/board", board) ~= sqlite3.OK then
-        Log(kLogWarn, "BOARD insert bind: %s" % {db:errmsg()})
-    elseif stmt:step() ~= sqlite3.DONE then
-        Log(kLogWarn, "BOARD insert step: %s" % {db:errmsg()})
-    else
-        Log(kLogInfo, "BOARD successfully updated")
-    end
-    stmt:finalize()
-end
-
-function UpdateBoard()
-    local db = ConnectDb()
-    UpdateBoardImpl(db)
-    db:close()
-end
-
-function UpdateBoardWorker()
-    assert(unix.unveil(".", "rwc"))
-    assert(unix.unveil("/var/tmp", "rwc"))
-    assert(unix.unveil("/tmp", "rwc"))
-    assert(unix.unveil(nil, nil))
-    assert(unix.pledge("stdio flock rpath wpath cpath", nil, unix.PLEDGE_PENALTY_RETURN_EPERM))
-    assert(unix.sigaction(unix.SIGINT, OnTerm))
-    assert(unix.sigaction(unix.SIGTERM, OnTerm))
-    while not gotterm do
-        UpdateBoard()
-        unix.nanosleep(30)
-    end
-    Log(kLogInfo, "UpdateBoardWorker() terminating")
 end
 
 function OnServerStart()
@@ -136,6 +50,7 @@ function OnServerStart()
     end
     local pid = assert(unix.fork())
     if pid == 0 then
+        local UpdateBoardWorker = require "board_worker"
         UpdateBoardWorker()
         unix.exit(0)
     end
