@@ -66,11 +66,6 @@ end
 local gotterm = false
 
 return function(db)
-    assert(unix.unveil(".", "rwc"))
-    assert(unix.unveil("/var/tmp", "rwc"))
-    assert(unix.unveil("/tmp", "rwc"))
-    assert(unix.unveil(nil, nil))
-    assert(unix.pledge("stdio flock rpath wpath cpath", nil, unix.PLEDGE_PENALTY_RETURN_EPERM))
     assert(unix.sigaction(unix.SIGINT, function() gotterm = true; end))
     assert(unix.sigaction(unix.SIGTERM, function() gotterm = true; end))
     while not gotterm do

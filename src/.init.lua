@@ -43,10 +43,18 @@ local function ConnectDb()
     return db
 end
 
+local function Lockdown()
+    assert(unix.unveil("/var/tmp", "rwc"))
+    assert(unix.unveil("/tmp", "rwc"))
+    assert(unix.unveil(nil, nil))
+    assert(unix.pledge("stdio flock rpath wpath cpath", nil, unix.PLEDGE_PENALTY_RETURN_EPERM))
+end
+
 function OnServerStart()
     if assert(unix.fork()) == 0 then
         local worker = require("board_worker")
         local db = ConnectDb()
+        Lockdown()
         worker(db)
         db:close()
         unix.exit(0)
@@ -60,13 +68,10 @@ function OnServerStart()
 end
 
 function OnWorkerStart()
-    db = ConnectDb()
     assert(unix.setrlimit(unix.RLIMIT_RSS, 100 * 1024 * 1024))
     assert(unix.setrlimit(unix.RLIMIT_CPU, 4))
-    assert(unix.unveil("/var/tmp", "rwc"))
-    assert(unix.unveil("/tmp", "rwc"))
-    assert(unix.unveil(nil, nil))
-    assert(unix.pledge("stdio flock rpath wpath cpath", nil, unix.PLEDGE_PENALTY_RETURN_EPERM))
+    Lockdown()
+    db = ConnectDb()
 end
 
 function StartsWith(str, start)
