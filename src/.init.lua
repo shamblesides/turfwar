@@ -86,7 +86,7 @@ function UpdateBoardImpl(db)
         Log(kLogWarn, "BOARD prepare board query: %s / %s" % {err or "(null)", db:errmsg()})
         return
     end
-    output = {["leaders"]={}}
+    output = {["leaders"]={}, ["now"]=os.time()}
     UpdateBoardCrawl(db, output, stmt)
     stmt:finalize()
     board = EncodeJson(output)
