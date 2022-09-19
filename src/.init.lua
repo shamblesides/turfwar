@@ -1,8 +1,6 @@
 maxmind = require "maxmind"
 sqlite3 = require "lsqlite3"
 
-unix.chdir('/opt/turfwar')
-
 TrustProxy(ParseIp("127.0.0.0"), 8);
 TrustProxy(ParseIp("103.21.244.0"), 22);
 TrustProxy(ParseIp("103.22.200.0"), 22);
@@ -26,6 +24,7 @@ geodb = maxmind.open('/usr/local/share/maxmind/GeoLite2-City.mmdb')
 asndb = maxmind.open('/usr/local/share/maxmind/GeoLite2-ASN.mmdb')
 
 if IsDaemon() then
+    assert(unix.chdir('/opt/turfwar'))
     ProgramPort(80)
     ProgramPort(443)
     ProgramUid(65534)
