@@ -58,23 +58,7 @@ end
 
 function OnWorkerStart()
     db = ConnectDb()
-
-    -- TODO(jart): Must we do this?
-    local stmt, err = db:prepare([[
-      SELECT
-        ip
-      FROM
-        land
-      WHERE
-        ip = 16812277
-    ]])
-    if not stmt then
-        Log(kLogWarn, string.format("Failed to prepare warmup query: %s", db:errmsg()))
-        unix.exit(1)
-    end
-    stmt:step()
-    stmt:finalize()
-
+    db:exec[[SELECT ip FROM land WHERE ip = 0x7f000001]] -- We have to do this warmup query for SQLite to work after doing unveil
     assert(unix.setrlimit(unix.RLIMIT_RSS, 100 * 1024 * 1024))
     assert(unix.setrlimit(unix.RLIMIT_CPU, 4))
     assert(unix.unveil("/var/tmp", "rwc"))
