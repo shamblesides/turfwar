@@ -1,4 +1,4 @@
-maxmind = require "maxmind"
+local log_request_origin = require "log_request_origin"
 sqlite3 = require "lsqlite3"
 
 TrustProxy(ParseIp("127.0.0.0"), 8);
@@ -19,9 +19,6 @@ TrustProxy(ParseIp("197.234.240.0"), 22);
 TrustProxy(ParseIp("198.41.128.0"), 17);
 assert(IsTrustedProxy(ParseIp("103.21.244.0")))
 assert(not IsTrustedProxy(ParseIp("166.21.244.0")))
-
-geodb = maxmind.open('/usr/local/share/maxmind/GeoLite2-City.mmdb')
-asndb = maxmind.open('/usr/local/share/maxmind/GeoLite2-ASN.mmdb')
 
 if IsDaemon() then
     assert(unix.chdir('/opt/turfwar'))
@@ -177,32 +174,6 @@ function EndsWith(str, ending)
     return ending == "" or str:sub(-#ending) == ending
 end
 
-function GetAsn(ip)
-    local as = asndb:lookup(ip)
-    if as then
-        local asnum = as:get("autonomous_system_number")
-        local asorg = as:get("autonomous_system_organization")
-        if asnum and asorg then
-            return '%s[%d]' % {asorg, asnum}
-        end
-    end
-    return 'unknown'
-end
-
-function GetGeo(ip)
-    local g = geodb:lookup(ip)
-    if g then
-        local country = g:get("country", "names", "en")
-        if country then
-            local city = g:get("city", "names", "en") or ''
-            local region = g:get("subdivisions", "0", "names", "en") or ''
-            local accuracy = g:get('location', 'accuracy_radius') or 9999
-            return '%s %s %s (%d km)' % {city, region, country, accuracy}
-        end
-    end
-    return 'unknown'
-end
-
 -- Redbean's global route handler
 function OnHttpRequest()
     local params = GetParams()
@@ -210,7 +181,7 @@ function OnHttpRequest()
     local path = GetPath()
 
     if ip then
-        Log(kLogInfo, '%s requested by %s from %s %s' % {path, FormatIp(ip), GetAsn(ip), GetGeo(ip)})
+        log_request_origin(path, ip)
     end
 
     if #params > 1 then
