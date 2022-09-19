@@ -144,10 +144,7 @@ function OnServerStart()
 end
 
 function OnWorkerStart()
-    db = sqlite3.open("db.sqlite3")
-    db:busy_timeout(1000)
-    db:exec[[PRAGMA journal_mode=WAL]]
-    db:exec[[PRAGMA synchronous=NORMAL]]
+    db = ConnectDb()
 
     -- TODO(jart): Must we do this?
     local stmt, err = db:prepare([[
