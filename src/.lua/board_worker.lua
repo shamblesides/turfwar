@@ -5,7 +5,7 @@
     update it periodically and cache it instead.
 ]]
 
-function UpdateBoardCrawl(db, output, stmt)
+local function UpdateBoardCrawl(db, output, stmt)
     local smallest, res
     for smallest = 0, 0xFF000000, 0x1000000 do
         if stmt:bind_values(smallest, smallest + 0xFFFFFF) ~= sqlite3.OK then
@@ -29,7 +29,7 @@ function UpdateBoardCrawl(db, output, stmt)
     end
 end
 
-function UpdateBoardImpl(db)
+local function UpdateBoardImpl(db)
     local stmt, err, output
     stmt, err = db:prepare([[
         SELECT nick As name, COUNT(ip) AS count
@@ -65,7 +65,7 @@ end
 
 local gotterm = false
 
-return function()
+return function(db)
     assert(unix.unveil(".", "rwc"))
     assert(unix.unveil("/var/tmp", "rwc"))
     assert(unix.unveil("/tmp", "rwc"))
@@ -73,11 +73,9 @@ return function()
     assert(unix.pledge("stdio flock rpath wpath cpath", nil, unix.PLEDGE_PENALTY_RETURN_EPERM))
     assert(unix.sigaction(unix.SIGINT, function() gotterm = true; end))
     assert(unix.sigaction(unix.SIGTERM, function() gotterm = true; end))
-    local db = ConnectDb()
     while not gotterm do
         UpdateBoardImpl(db)
         unix.nanosleep(30)
     end
     Log(kLogInfo, "UpdateBoardWorker() terminating")
-    db:close()
 end

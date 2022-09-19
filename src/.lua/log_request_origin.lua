@@ -1,5 +1,7 @@
 local maxmind = require "maxmind"
 
+local geodb, asndb
+
 if unix.stat('/usr/local/share/maxmind') then
     geodb = maxmind.open('/usr/local/share/maxmind/GeoLite2-City.mmdb')
     asndb = maxmind.open('/usr/local/share/maxmind/GeoLite2-ASN.mmdb')
@@ -7,7 +9,7 @@ else
     Log(kLogWarn, "Maxmind database missing")
 end
 
-function GetAsn(ip)
+local function GetAsn(ip)
     local as = asndb:lookup(ip)
     if as then
         local asnum = as:get("autonomous_system_number")
@@ -19,7 +21,7 @@ function GetAsn(ip)
     return 'unknown'
 end
 
-function GetGeo(ip)
+local function GetGeo(ip)
     local g = geodb:lookup(ip)
     if g then
         local country = g:get("country", "names", "en")

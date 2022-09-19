@@ -34,18 +34,21 @@ if IsDaemon() then
     ProgramCertificate(Slurp('/home/jart/mykey.crt'))
 end
 
-function ConnectDb()
+local function ConnectDb()
     local db = sqlite3.open("db.sqlite3")
     db:busy_timeout(1000)
     db:exec[[PRAGMA journal_mode=WAL]]
     db:exec[[PRAGMA synchronous=NORMAL]]
+    db:exec[[SELECT ip FROM land WHERE ip = 0x7f000001]] -- We have to do this warmup query for SQLite to work after doing unveil
     return db
 end
 
 function OnServerStart()
     if assert(unix.fork()) == 0 then
         local worker = require("board_worker")
-        worker()
+        local db = ConnectDb()
+        worker(db)
+        db:close()
         unix.exit(0)
     end
 
@@ -58,7 +61,6 @@ end
 
 function OnWorkerStart()
     db = ConnectDb()
-    db:exec[[SELECT ip FROM land WHERE ip = 0x7f000001]] -- We have to do this warmup query for SQLite to work after doing unveil
     assert(unix.setrlimit(unix.RLIMIT_RSS, 100 * 1024 * 1024))
     assert(unix.setrlimit(unix.RLIMIT_CPU, 4))
     assert(unix.unveil("/var/tmp", "rwc"))
