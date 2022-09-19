@@ -2,6 +2,8 @@ local log_request_origin = require "log_request_origin"
 sqlite3 = require "lsqlite3"
 
 TrustProxy(ParseIp("127.0.0.0"), 8);
+
+-- Cloudflare proxy ranges
 TrustProxy(ParseIp("103.21.244.0"), 22);
 TrustProxy(ParseIp("103.22.200.0"), 22);
 TrustProxy(ParseIp("103.31.4.0"), 22);
