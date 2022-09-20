@@ -17,9 +17,15 @@ if name == nil or name == "" then
 elseif #name > 40 then
     return ClientError("name must be no more than 40 characters")
 else
-    local invalid_char = re.search("[^!-~]", name)
-    if invalid_char ~= nil then
-        return ClientError([[Invalid character in name: "%s"]] % invalid_char, kLogWarn)
+    local invalid_index = name:find("[^!-~]")
+    if invalid_index ~= nil then
+        local is_valid_utf8, codepoint = pcall(utf8.codepoint, name, invalid_index)
+        if is_valid_utf8 then
+            Log(kLogWarn, "Invalid character in name (codepoint %d)" % {codepoint})
+            return ClientError("Invalid character in name at index %d" % {invalid_index})
+        else
+            return ClientError("name is not valid utf8", kLogWarn)
+        end
     end
 end
 
