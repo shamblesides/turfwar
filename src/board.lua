@@ -7,7 +7,7 @@ local stmt, err = db:prepare[[SELECT val FROM cache WHERE key = '/board']]
 
 if not stmt then
     return InternalError("Failed to prepare board query: %s / %s" % {err or "(null)", db:errmsg()})
-else if stmt:step() ~= sqlite3.ROW then
+elseif stmt:step() ~= sqlite3.ROW then
     stmt:finalize()
     return InternalError("Internal error (stmt:step): %s" % {db:errmsg()})
 end
