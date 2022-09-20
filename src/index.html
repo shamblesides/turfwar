@@ -52,6 +52,7 @@
 <p><a href="/about.html" target="_blank">(What is this?)</a></p>
 
 <h1>Top Players</h1>
+<em id="last-updated"></em>
 <ol id="top-players">
     <li>Loading top players...</li>
 </ol>
@@ -119,12 +120,14 @@
     fetch('/board').then(res => {
         if (res.status === 200) return res.json();
         else throw new Error(`Failed to load the board: ${res.status}`);
-    }).then(({leaders}) => {
+    }).then(({leaders, now:lastUpdated}) => {
         /** @type{HTMLTemplateElement} */
         const segmentTemplate = document.getElementById('segment');
         const segmentsContainer = document.getElementById('segments')
         const topPlayersList = document.getElementById('top-players');
         const showAllTopPlayersButton = document.getElementById('show-all-top-players');
+
+        document.getElementById('last-updated').innerText = `(Last updated ${(Date.now()/1000 - lastUpdated).toFixed(1)} seconds ago)`
 
         segmentsContainer.innerHTML = '';
         topPlayersList.innerHTML = '';
