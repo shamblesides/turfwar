@@ -66,6 +66,20 @@ function InternalError(msg)
     return ServeError(500)
 end
 
+function EnforceMethod(allowed_methods)
+    local method = GetMethod()
+    for i,val in ipairs(allowed_methods) do
+        if method == val then
+            return true
+        end
+    end
+    Log(kLogWarn, "got %s request from %s" % {method, FormatIp(GetRemoteAddr() or "0.0.0.0")})
+    ServeError(405)
+    SetHeader("Cache-Control", "private")
+    SetHeader('Allow', table.concat(allowed_methods, ', '))
+    return false
+end
+
 function OnServerStart()
     if assert(unix.fork()) == 0 then
         local worker = require("board_worker")

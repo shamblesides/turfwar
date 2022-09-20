@@ -1,11 +1,6 @@
 SetHeader("Access-Control-Allow-Origin", "*")
 
-if GetMethod() ~= 'GET' and GetMethod() ~= 'POST' and GetMethod() ~= 'HEAD' then
-    Log(kLogWarn, "got %s request from %s" % {GetMethod(), FormatIp(GetRemoteAddr() or "0.0.0.0")})
-    ServeError(405)
-    SetHeader('Allow', 'GET, POST, HEAD')
-    return
-end
+if not EnforceMethod({'GET', 'POST', 'HEAD'}) then return end
 
 local ip = GetRemoteAddr()
 if not ip then
