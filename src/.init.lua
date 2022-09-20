@@ -80,6 +80,21 @@ function EnforceMethod(allowed_methods)
     return false
 end
 
+function EnforceParams(exact_params)
+    local params = GetParams()
+    if #params > #exact_params then
+        ClientError('too many params')
+        return false
+    end
+    for i,val in ipairs(exact_params) do
+        if GetParam(val) == nil then
+            ClientError('Missing query param: %s' % {val})
+            return false
+        end
+    end
+    return true
+end
+
 function OnServerStart()
     if assert(unix.fork()) == 0 then
         local worker = require("board_worker")
@@ -114,18 +129,11 @@ end
 
 -- Redbean's global route handler
 function OnHttpRequest()
-    local params = GetParams()
     local ip = GetRemoteAddr()
     local path = GetPath()
 
     if ip then
         log_request_origin(path, ip)
-    end
-
-    if #params > 1 then
-        SetStatus(400, 'too many params')
-        Write('too many params\r\n')
-        return
     end
 
     if path == "/ip" then
@@ -139,6 +147,9 @@ function OnHttpRequest()
     elseif path == "/summary" then
         Route(GetHost(), "/summary.lua")
     else
+        if #GetParams() > 1 then
+            return ClientError('too many params')
+        end
         -- Default redbean route handling
         Route()
         if EndsWith(path, ".html") then

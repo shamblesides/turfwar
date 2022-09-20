@@ -1,16 +1,7 @@
 SetHeader("Access-Control-Allow-Origin", "*")
 
 if not EnforceMethod({'GET', 'HEAD'}) then return end
-
-local params = GetParams()
-if #params > 0 then
-    return ClientError('too many parameters')
-end
-
-local params = GetParams()
-if #params > 0 then
-    return ClientError('too many parameters')
-end
+if not EnforceParams({}) then return end
 
 local stmt, err = db:prepare[[SELECT val FROM cache WHERE key = ?1]]
 

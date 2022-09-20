@@ -1,6 +1,7 @@
 SetHeader("Access-Control-Allow-Origin", "*")
 
 if not EnforceMethod({'GET', 'HEAD'}) then return end
+if not EnforceParams({'name'}) then return end
 
 local name = GetParam("name")
 

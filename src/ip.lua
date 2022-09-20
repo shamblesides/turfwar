@@ -1,4 +1,5 @@
 if not EnforceMethod({'GET', 'HEAD'}) then return end
+if not EnforceParams({}) then return end
 
 local ip = GetRemoteAddr()
 

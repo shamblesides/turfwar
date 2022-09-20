@@ -1,6 +1,7 @@
 SetHeader("Access-Control-Allow-Origin", "*")
 
 if not EnforceMethod({'GET', 'POST', 'HEAD'}) then return end
+if not EnforceParams({'name'}) then return end
 
 local ip = GetRemoteAddr()
 if not ip then
