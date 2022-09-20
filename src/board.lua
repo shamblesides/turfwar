@@ -1,32 +1,50 @@
 SetHeader("Access-Control-Allow-Origin", "*")
 
-local output = {["ip"]=FormatIp(GetRemoteAddr()), ["leaders"]={}}
-
-ConnectDb()
-local stmt = db:prepare([[
-    SELECT nick As name, COUNT(ip) AS count FROM land WHERE ip >= ?1 AND ip <= ?2 GROUP BY nick ORDER BY count DESC LIMIT 1;
-]])
-for smallest = 0, 0xFF000000, 0x1000000 do
-    if stmt:bind_values(smallest, smallest + 0xFFFFFF) ~= sqlite3.OK then
-        stmt:finalize()
-        return ServeError(500, string.format("Internal error (stmt:bind_values): %s", db:errmsg()))
-    end
-    local res = stmt:step()
-    if res == sqlite3.ROW then
-        table.insert(output["leaders"], stmt:get_named_values())
-        if stmt:step() ~= sqlite3.DONE then
-            stmt:finalize()
-            return ServeError(500, string.format("Internal error (stmt:step after row): %s", db:errmsg()))
-        end
-    elseif res == sqlite3.DONE then
-        table.insert(output["leaders"], false)
-    else
-        stmt:finalize()
-        return ServeError(500, string.format("Internal error (stmt:step returned %d): %s", res, db:errmsg()))
-    end
-    stmt:reset()
+if GetMethod() ~= 'GET' and GetMethod() ~= 'HEAD' then
+    Log(kLogWarn, "got %s request from %s" % {GetMethod(), FormatIp(GetRemoteAddr() or "0.0.0.0")})
+    ServeError(405)
+    SetHeader('Allow', 'GET, HEAD')
+    return
 end
-stmt:finalize()
+
+local params = GetParams()
+if #params > 0 then
+    SetStatus(400, 'too many parameters')
+    Write('too many parameters\r\n')
+    return
+end
+
+local params = GetParams()
+if #params > 0 then
+    SetStatus(400, 'too many parameters')
+    Write('too many parameters\r\n')
+    return
+end
+
+local stmt, err = db:prepare[[SELECT val FROM cache WHERE key = ?1]]
+
+if not stmt then
+    Log(kLogWarn, "Failed to prepare board query: %s / %s" % {err or "(null)", db:errmsg()})
+    SetHeader('Connection', 'close')
+    return ServeError(500)
+end
+
+if stmt:bind_values("/board") ~= sqlite3.OK then
+    stmt:finalize()
+    Log(kLogWarn, "Internal error (stmt:bind_values): %s" % {db:errmsg()})
+    SetHeader('Connection', 'close')
+    return ServeError(500)
+end
+
+if stmt:step() ~= sqlite3.ROW then
+    stmt:finalize()
+    Log(kLogWarn, "Internal error (stmt:step): %s" % {db:errmsg()})
+    SetHeader('Connection', 'close')
+    return ServeError(500)
+end
 
 SetHeader("Content-Type", "application/json")
-Write(EncodeJson(output))
+SetHeader("Cache-Control", "public, max-age=60, must-revalidate")
+Write(stmt:get_value(0))
+
+stmt:finalize()

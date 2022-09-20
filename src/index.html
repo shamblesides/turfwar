@@ -32,12 +32,23 @@
     }
 </style>
 
+<div id="claim-box">
 <h1>Claim The Land At <span id="my-ip">Your IP</span></h1>
 <form>
     <label for="name">I claim this land for</label>
     <input type="text" required maxlength="40" pattern="[!-~]+" name="name" placeholder="Name, email, URL, whatever!" onchange="onNameFieldChange(this)">
     <button type="submit" formaction="/claim" formmethod="GET">Claim!</button>
 </form>
+</div>
+
+<div id="ipv6-box" style="display:none">
+  <h1>Claim Your Land</h1>
+  <p>
+    Sorry! You appear to be connecting from an IPv6 address.
+    IPv4 Games only supports IPv4 right now.
+  </p>
+</div>
+
 <p><a href="/about.html" target="_blank">(What is this?)</a></p>
 
 <h1>Top Players</h1>
@@ -99,8 +110,12 @@
     fetch('/ip').then(res => {
         if (res.status === 200) {
             res.text().then(myIP => document.getElementById('my-ip').innerText = myIP);
+        } else {
+            document.getElementById('claim-box').style.display = 'none';
+            document.getElementById('ipv6-box').style.display = 'block';
         }
     });
+
     fetch('/board').then(res => {
         if (res.status === 200) return res.json();
         else throw new Error(`Failed to load the board: ${res.status}`);
