@@ -10,40 +10,28 @@ end
 local name = GetParam("name")
 
 if name == nil or name == "" then
-    SetStatus(400, "name query param was blank")
-    Write("name query param was blank")
-    return
+    return ClientError("name query param was blank")
 elseif #name > 40 then
-    SetStatus(400, "name must be no more than 40 characters")
-    Write("name must be no more than 40 characters")
-    return
+    return ClientError("name must be no more than 40 characters")
 end
 
 local stmt, err = db:prepare[[SELECT COUNT(*) FROM land WHERE nick = ?1]]
 
 if not stmt then
-    Log(kLogWarn, string.format("Failed to prepare select query: %s / %s", err or "(null)", db:errmsg()))
-    SetHeader('Connection', 'close')
-    return ServeError(500)
+    return InternalError(string.format("Failed to prepare select query: %s / %s", err or "(null)", db:errmsg()))
 end
 
 if stmt:bind_values(name) ~= sqlite3.OK then
     stmt:finalize()
-    Log(kLogWarn, string.format("Internal error (stmt:bind_values): %s", db:errmsg()))
-    SetHeader('Connection', 'close')
-    return ServeError(500)
+    return InternalError(string.format("Internal error (stmt:bind_values): %s", db:errmsg()))
 elseif stmt:step() ~= sqlite3.ROW then
     stmt:finalize()
-    Log(kLogWarn, string.format("Internal error (stmt:step): %s", db:errmsg()))
-    SetHeader('Connection', 'close')
-    return ServeError(500)
+    return InternalError(string.format("Internal error (stmt:step): %s", db:errmsg()))
 else
     local out = {["total"] = stmt:get_value(0)}
     if stmt:step() ~= sqlite3.DONE then
         stmt:finalize()
-        Log(kLogWarn, string.format("Internal error (stmt:step after row): %s", db:errmsg()))
-        SetHeader('Connection', 'close')
-        return ServeError(500)
+        return InternalError(string.format("Internal error (stmt:step after row): %s", db:errmsg()))
     end
     stmt:finalize()
     SetHeader("Content-Type", "application/json")

@@ -9,16 +9,12 @@ end
 
 local params = GetParams()
 if #params > 0 then
-    SetStatus(400, 'too many parameters')
-    Write('too many parameters\r\n')
-    return
+    return ClientError('too many parameters')
 end
 
 local params = GetParams()
 if #params > 0 then
-    SetStatus(400, 'too many parameters')
-    Write('too many parameters\r\n')
-    return
+    return ClientError('too many parameters')
 end
 
 local stmt, err = db:prepare[[SELECT val FROM cache WHERE key = ?1]]

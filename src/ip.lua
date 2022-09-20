@@ -14,7 +14,5 @@ if ip then
     Write(FormatIp(ip))
     return
 else
-    SetStatus(400, "IPv4 Games only supports IPv4 right now")
-    Write("IPv4 Games only supports IPv4 right now")
-    return
+    return ClientError("IPv4 Games only supports IPv4 right now")
 end

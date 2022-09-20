@@ -9,9 +9,7 @@ end
 
 local ip = GetRemoteAddr()
 if not ip then
-    SetStatus(400, "IPv4 Games only supports IPv4 right now")
-    Write("IPv4 Games only supports IPv4 right now")
-    return
+    return ClientError("IPv4 Games only supports IPv4 right now")
 end
 
 local ip_str = FormatIp(ip)
@@ -19,34 +17,25 @@ local name = GetParam("name")
 local escaped_name = EscapeHtml(name)
 
 if name == nil or name == "" then
-    SetStatus(400, "Name query param was blank")
-    Write("Name query param was blank")
-    return
+    return ClientError("Name query param was blank")
 elseif #name > 40 then
-    SetStatus(400, "name must be no more than 40 characters")
-    Write("name must be no more than 40 characters")
-    return
+    return ClientError("name must be no more than 40 characters")
 else
     local invalid_char = re.search("[^!-~]", name)
     if invalid_char ~= nil then
-        Log(kLogWarn, string.format("Invalid character in name: \"%s\"", invalid_char))
-        return ServeError(400)
+        return ClientError([[Invalid character in name: "%s"]] % invalid_char, kLogWarn)
     end
 end
 
 local stmt, err = db:prepare[[SELECT nick FROM land WHERE ip = ?1]]
 
 if not stmt then
-    Log(kLogWarn, string.format("Failed to prepare select query: %s / %s", err or "(null)", db:errmsg()))
-    SetHeader('Connection', 'close')
-    return ServeError(500)
+    return InternalError(string.format("Failed to prepare select query: %s / %s", err or "(null)", db:errmsg()))
 end
 
 if stmt:bind_values(ip) ~= sqlite3.OK then
     stmt:finalize()
-    Log(kLogWarn, string.format("Internal error (stmt:bind_values): %s", db:errmsg()))
-    SetHeader('Connection', 'close')
-    return ServeError(500)
+    return InternalError(string.format("Internal error (stmt:bind_values): %s", db:errmsg()))
 end
 
 local res = stmt:step()
@@ -72,9 +61,7 @@ elseif res == sqlite3.ROW then
     end
 else
     stmt:finalize()
-    Log(kLogWarn, string.format("Internal error (stmt:step): %s", db:errmsg()))
-    SetHeader('Connection', 'close')
-    return ServeError(500)
+    return InternalError(string.format("Internal error (stmt:step): %s", db:errmsg()))
 end
 stmt:finalize()
 
@@ -84,14 +71,10 @@ local stmt = db:prepare([[
 ]])
 if stmt:bind_values(ip, name) ~= sqlite3.OK then
     stmt:finalize()
-    Log(kLogWarn, string.format("Internal error (stmt:bind_values): %s", db:errmsg()))
-    SetHeader('Connection', 'close')
-    return ServeError(500)
+    return InternalError(string.format("Internal error (stmt:bind_values): %s", db:errmsg()))
 elseif stmt:step() ~= sqlite3.DONE then
     stmt:finalize()
-    Log(kLogWarn, string.format("Internal error (stmt:step): %s", db:errmsg()))
-    SetHeader('Connection', 'close')
-    return ServeError(500)
+    return InternalError(string.format("Internal error (stmt:step): %s", db:errmsg()))
 end
 stmt:finalize()
 

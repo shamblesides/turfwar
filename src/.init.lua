@@ -50,6 +50,22 @@ local function Lockdown()
     assert(unix.pledge("stdio flock rpath wpath cpath", nil, unix.PLEDGE_PENALTY_RETURN_EPERM))
 end
 
+function ClientError(msg, loglevel)
+    if loglevel ~= nil then
+        Log(loglevel, string.format(msg))
+    end
+    SetStatus(400, msg)
+    SetHeader('Content-Type', 'text/plain')
+    Write(msg..'\r\n')
+    return msg
+end
+
+function InternalError(msg)
+    Log(kLogWarn, msg)
+    SetHeader('Connection', 'close')
+    return ServeError(500)
+end
+
 function OnServerStart()
     if assert(unix.fork()) == 0 then
         local worker = require("board_worker")
