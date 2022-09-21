@@ -5,6 +5,7 @@
 
 <h1>Stats for <span id="my-name"></span></h1>
 <noscript>This page won't work without JavaScript :)</noscript>
+<em id="last-updated"></em>
 <ul>
     <li>Total addresses: <span id="total-addresses">...</span></li>
 </ul>
@@ -14,12 +15,29 @@
 <script>
     const params = new URLSearchParams(location.search);
     const name = params.get('name');
+    const ul = document.querySelector('ul');
     document.getElementById('my-name').innerText = name;
 
+    function ordinal(n) {
+        const suf = {1:'st', 2:'nd', 3:'rd', 11:'th', 12:'th', 13:'th'}
+        return n + ((n/10|0)%10 !== 1 && [,'st','nd','rd'][n%10] || 'th');
+    }
+
     const totalAddresses = document.getElementById('total-addresses')
-    fetch(`/user?name=${encodeURIComponent(name)}`).then(res => {
+    fetch(`/data`).then(res => {
         if (res.status === 200) {
-            res.json().then(({total}) => totalAddresses.innerText = total);
+            res.json().then(({scores}) => {
+                let total = 0;
+                for (const [block, count] of Object.entries(scores[name] || {})) {
+                    const li = document.createElement('li');
+                    const ranking = 1 + Object.values(scores).filter(b => b[block] > count).length;
+                    const tied = Object.values(scores).filter(b => b[block] === count).length > 1;
+                    li.innerText = `${tied?'Tied ':''}${ordinal(ranking)} in block ${block}.0.0.0/8 with ${Intl.NumberFormat().format(count)} address${total == 1 ? '' : 'es'}`
+                    ul.appendChild(li);
+                    total += count;
+                }
+                totalAddresses.innerText = Intl.NumberFormat().format(total);
+            });
         } else {
             totalAddresses.innerText = 'error loading document';
         }

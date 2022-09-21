@@ -140,12 +140,8 @@ function OnHttpRequest()
         Route(GetHost(), "/ip.lua")
     elseif path == "/claim" then
         Route(GetHost(), "/claim.lua")
-    elseif path == "/board" then
-        Route(GetHost(), "/board.lua")
-    elseif path == "/user" then
-        Route(GetHost(), "/user.lua")
-    elseif path == "/summary" then
-        Route(GetHost(), "/summary.lua")
+    elseif path == "/data" then
+        Route(GetHost(), "/data.lua")
     else
         if #GetParams() > 1 then
             return ClientError('too many params')

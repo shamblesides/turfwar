@@ -24,11 +24,17 @@
     .segment-empty {
         opacity: 0.5;
     }
+    .segment-tied {
+        background-color: #f4f4f4;
+    }
     .segment > * {
         display: block;
     }
     .segment-nick {
         word-wrap: break-word;
+    }
+    .top10 > *:nth-child(n+11) {
+        display: none;
     }
 </style>
 
@@ -52,14 +58,14 @@
 <p><a href="/about.html" target="_blank">(What is this?)</a></p>
 
 <h1>Top Players</h1>
+<noscript>(Requires JavaScript to view)</noscript>
 <em id="last-updated"></em>
-<ol id="top-players">
+<ol id="top-players" class="top10">
     <li>Loading top players...</li>
 </ol>
 <button type="button" id="show-all-top-players" style="display:none" onclick="showAllWinners()">Show All</button>
 
-<h1>All /8 Address Blocks</h1>
-<noscript>(Requires JavaScript to view)</noscript>
+<h1>/8 Block Leaders</h1>
 <div id="segments">Loading segments...</div>
 <template id="segment">
     <div class="segment">
@@ -117,24 +123,48 @@
         }
     });
 
-    fetch('/board').then(res => {
+    fetch('/data').then(res => {
         if (res.status === 200) return res.json();
         else throw new Error(`Failed to load the board: ${res.status}`);
-    }).then(({leaders, now:lastUpdated}) => {
+    }).then((/** @type{{now:number, scores:Record<string,Record<number,number>}} */ res) => {
+        const {scores, now:lastUpdated} = res;
+        const blockTotals = Array(256).fill(0);
+        const blockMaximums = Array(256).fill(0);
+        /** @type{{name:string,count:number}[][]} */
+        const blockRankings = Array(256).fill().map(() => []);
+        const allPeople = Object.entries(scores).map(([name, blocks]) => {
+            for (const [block, count] of Object.entries(blocks)) {
+                blockTotals[block] += count;
+                blockMaximums[block] = Math.max(blockMaximums[block], count)
+                blockRankings[block].push({name, count})
+            }
+            /** @type{number[]} */
+            const owned = [];
+            const total = Object.values(blocks).reduce((a,b)=>a+b);
+            return {name, blocks, owned, total};
+        });
+        blockRankings.forEach(arr => arr.sort((a,b) => b.count - a.count));
+        const blockWinners = blockRankings.map((arr, i) => arr.filter(p => p.count === blockMaximums[i]).map(p => p.name));
+        blockWinners.forEach((names, i) => {
+            if (names.length === 1) {
+                allPeople.find(p => p.name === names[0]).owned.push(i)
+            }
+        });
+        allPeople.sort((a,b) => (b.owned.length - a.owned.length) || (b.total - a.total));
+        const people = allPeople.filter(p => p.owned.length > 0 || p.total >= 10);
+
         /** @type{HTMLTemplateElement} */
         const segmentTemplate = document.getElementById('segment');
         const segmentsContainer = document.getElementById('segments')
         const topPlayersList = document.getElementById('top-players');
         const showAllTopPlayersButton = document.getElementById('show-all-top-players');
 
-        document.getElementById('last-updated').innerText = `(Last updated ${(Date.now()/1000 - lastUpdated).toFixed(1)} seconds ago)`
+        // document.getElementById('last-updated').innerText = `(Last updated ${(Date.now()/1000 - lastUpdated).toFixed(1)} seconds ago)`
 
         segmentsContainer.innerHTML = '';
         topPlayersList.innerHTML = '';
 
-        const ranking = {};
-        const tiebreaker = {};
-        leaders.forEach((info, i) => {
+        for (let i = 0; i < 256; ++i) {
             /** @type{HTMLElement} */
             const el = segmentTemplate.content.cloneNode(true).querySelector('*');
             segmentsContainer.appendChild(el);
@@ -142,32 +172,36 @@
             const cidr = `${i}.0.0.0/8`;
             el.querySelector('.segment-cidr').innerText = cidr;
 
-            if (info) {
-                const {name, count} = info;
+            const count = blockMaximums[i];
+            const winners = allPeople.filter(p => p.blocks[i] === count);
+            if (winners.length === 1) {
+                const {name} = winners[0];
                 el.querySelector('.segment-nick').appendChild(nameLink(name))
                 el.querySelector('.segment-count').innerText = `(${count} address${count == 1 ? '' : 'es'})`;
                 el.style.backgroundColor = blockColor(name)
-                ranking[name] = (ranking[name] || []).concat([i]);
-                tiebreaker[name] = (tiebreaker[name] || 0) + count;
-            } else {
+            } else if (winners.length === 0) {
                 el.classList.add('segment-empty');
+            } else {
+                el.querySelector('.segment-nick').innerText = '(tied)';
+                el.querySelector('.segment-count').innerText = `(${count} address${count == 1 ? '' : 'es'})`;
+                el.classList.add('segment-tied');
             }
-        });
+        }
 
-        const winners = Object.entries(ranking).map(([n,b]) => ({name:n, blocks:b}))
-        winners.sort((w1, w2) => (w2.blocks.length - w1.blocks.length) || (tiebreaker[w2.name] - tiebreaker[w1.name]));
-        winners.forEach(({name, blocks}, place) => {
+        for (const {name, total, owned} of people) {
             const li = document.createElement('li');
             li.appendChild(nameLink(name));
-            li.append(` with ${blocks.length} block${blocks.length>1?'s':''} ... ${blocks.join(', ')}`)
-            if (place >= 10) li.style.display = 'none';
+            li.append(` with ${Intl.NumberFormat().format(total)} address${total == 1 ? '' : 'es'}`)
+            if (owned.length >= 1) {
+                li.append(`, and ${owned.length} block${owned.length>1?'s':''} controlled ... ${owned.join(', ')}`)
+            }
             topPlayersList.appendChild(li);
-        });
+        }
 
         showAllTopPlayersButton.style.display = '';
         showAllTopPlayersButton.onclick = function () {
             showAllTopPlayersButton.style.display = 'none';
-            topPlayersList.querySelectorAll('li').forEach(li => li.style.display = '');
+            topPlayersList.classList.remove('top10');
         }
     })
 </script>
