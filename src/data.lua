@@ -11,6 +11,7 @@ elseif stmt:step() ~= sqlite3.ROW then
 end
 
 SetHeader("Content-Type", "application/json")
+SetHeader("Content-Encoding", "deflate")
 SetHeader("Cache-Control", "public, max-age=60, must-revalidate")
 Write(stmt:get_value(0))
 

@@ -19,6 +19,7 @@ local function UpdateBoardImpl(db)
     end
 
     output = EncodeJson({["scores"]=scores, ["now"]=os.time()})
+    output = Deflate(output)
     stmt, err = db:prepare([[
         INSERT INTO cache (key, val) VALUES ('/board', ?1)
         ON CONFLICT (key) DO UPDATE SET (val) = (?1)
