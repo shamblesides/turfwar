@@ -44,7 +44,7 @@ return function(db)
     assert(unix.sigaction(unix.SIGTERM, function() gotterm = true; end))
     while not gotterm do
         UpdateBoardImpl(db)
-        unix.nanosleep(30)
+        unix.nanosleep(10)
     end
     Log(kLogInfo, "UpdateBoardWorker() terminating")
 end
