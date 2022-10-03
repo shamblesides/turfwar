@@ -10,7 +10,7 @@ local function UpdateBoardImpl(db)
     local scores = {} 
     err = db:exec([[SELECT nick, (ip >> 24), COUNT(*) FROM land GROUP BY nick, (ip >> 24)]], function (udata, cols, vals, names)
         scores[vals[1]] = scores[vals[1]] or {}
-        scores[vals[1]][tostring(vals[2])] = tonumber(vals[3])
+        table.insert(scores[vals[1]], {tonumber(vals[2]), tonumber(vals[3])})
         return 0
     end)
     if err ~= sqlite3.OK then
@@ -18,7 +18,7 @@ local function UpdateBoardImpl(db)
         return
     end
 
-    output = EncodeJson({["scores"]=scores, ["now"]=os.time()})
+    output = EncodeJson({["score"]=scores, ["now"]={os.time()}})
     output = Deflate(output)
     stmt, err = db:prepare([[
         INSERT INTO cache (key, val) VALUES ('/board', ?1)

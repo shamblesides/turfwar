@@ -12,7 +12,7 @@ end
 
 SetHeader("Content-Type", "application/json")
 SetHeader("Content-Encoding", "deflate")
-SetHeader("Cache-Control", "public, max-age=60, must-revalidate")
+SetHeader("Cache-Control", "public, max-age=5, must-revalidate")
 Write(stmt:get_value(0))
 
 stmt:finalize()

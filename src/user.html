@@ -24,14 +24,14 @@
     }
 
     const totalAddresses = document.getElementById('total-addresses')
-    fetch(`/data`).then(res => {
+    fetch('/score').then(res => {
         if (res.status === 200) {
-            res.json().then(({scores}) => {
+            res.json().then(({score}) => {
                 let total = 0;
-                for (const [block, count] of Object.entries(scores[name] || {})) {
+                for (const [block, count] of score[name] || []) {
                     const li = document.createElement('li');
-                    const ranking = 1 + Object.values(scores).filter(b => b[block] > count).length;
-                    const tied = Object.values(scores).filter(b => b[block] === count).length > 1;
+                    const ranking = 1 + Object.values(score).filter(b => (b.find(([k,v]) => k == block) || [null,0])[1] > count).length;
+                    const tied = Object.values(score).filter(b => (b.find(([k,v]) => k == block) || [null,0])[1] === count).length > 1;
                     li.innerText = `${tied?'Tied ':''}${ordinal(ranking)} in block ${block}.0.0.0/8 with ${Intl.NumberFormat().format(count)} address${total == 1 ? '' : 'es'}`
                     ul.appendChild(li);
                     total += count;
