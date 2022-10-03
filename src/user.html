@@ -26,7 +26,9 @@
     const totalAddresses = document.getElementById('total-addresses')
     fetch('/score').then(res => {
         if (res.status === 200) {
-            res.json().then(({score}) => {
+            res.json().then(({score, now:[lastUpdated]}) => {
+                document.getElementById('last-updated').innerText = `(Last updated ${(Date.now()/1000 - lastUpdated).toFixed(1)} seconds ago)`
+
                 let total = 0;
                 for (const [block, count] of score[name] || []) {
                     const li = document.createElement('li');
