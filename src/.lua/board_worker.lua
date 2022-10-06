@@ -1,6 +1,6 @@
 --[[
     We could be generating this fresh every time someone
-    hits the /board route, but since it's a bit expensive
+    hits the /score route, but since it's a bit expensive
     (it has to process the entire claim table!) we just
     update it periodically and cache it instead.
 ]]
