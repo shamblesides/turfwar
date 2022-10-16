@@ -1,3 +1,5 @@
+REDBEAN_VERSION = redbean-asan-2.0.19.com
+
 default: server.com
 
 .PHONY: clean
@@ -12,12 +14,12 @@ dev: server.com db.sqlite3
 update:
 	cd src && zip -r ../server.com .
 
-server.com: redbean-asan-2.0.19.com $(shell find src)
-	cp redbean-asan-2.0.19.com server.com
+server.com: $(REDBEAN_VERSION) $(shell find src)
+	cp $(REDBEAN_VERSION) server.com
 	cd src && zip -r ../server.com .
 
-redbean-asan-2.0.19.com:
-	wget https://redbean.dev/redbean-asan-2.0.19.com -O redbean-asan-2.0.19.com && chmod +x redbean-asan-2.0.19.com
+$(REDBEAN_VERSION):
+	wget https://redbean.dev/$(REDBEAN_VERSION) -O $(REDBEAN_VERSION) && chmod +x $(REDBEAN_VERSION)
 
 sqlite3.com:
 	wget https://redbean.dev/sqlite3.com -O sqlite3.com && chmod +x sqlite3.com
