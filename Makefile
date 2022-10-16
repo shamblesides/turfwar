@@ -17,10 +17,10 @@ server.com: redbean-asan-2.0.19.com $(shell find src)
 	cd src && zip -r ../server.com .
 
 redbean-asan-2.0.19.com:
-	curl https://redbean.dev/redbean-asan-2.0.19.com > redbean-asan-2.0.19.com && chmod +x redbean-asan-2.0.19.com
+	wget https://redbean.dev/redbean-asan-2.0.19.com -O redbean-asan-2.0.19.com && chmod +x redbean-asan-2.0.19.com
 
 sqlite3.com:
-	curl https://redbean.dev/sqlite3.com > sqlite3.com && chmod +x sqlite3.com
+	wget https://redbean.dev/sqlite3.com -O sqlite3.com && chmod +x sqlite3.com
 
 db.sqlite3: sqlite3.com
 	./sqlite3.com db.sqlite3 < schema.sql
